@@ -9,8 +9,8 @@
 	xmlns:http="http://www.mulesoft.org/schema/mule/http" 
 	xmlns:spring="http://www.springframework.org/schema/beans" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-	xsi:schemaLocation="
-http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+	xsi:schemaLocation="http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
 http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
@@ -168,16 +168,16 @@ payload map {
 {
 	Id                : payload.Id,
 	Name              : flowVars.input.name,
-	BillingStreet     : flowVars.input.address1,
-	BillingCity       : flowVars.input.city,
-	BillingState      : flowVars.input.state,
-	BillingPostalCode : flowVars.input.postalCode,
-	BillingCountry    : flowVars.input.country,
-	ShippingStreet    : flowVars.input.address1,
-	ShippingCity      : flowVars.input.city,
-	ShippingState     : flowVars.input.state,
-	ShippingPostalCode: flowVars.input.postalCode,
-	ShippingCountry   : flowVars.input.country
+	BillingStreet     : flowVars.input.billingStreet,
+	BillingCity       : flowVars.input.billingCity,
+	BillingState      : flowVars.input.billingState,
+	BillingPostalCode : flowVars.input.billingPostalCode,
+	BillingCountry    : flowVars.input.billingCountry,
+	ShippingStreet    : flowVars.input.shippingStreet,
+	ShippingCity      : flowVars.input.shippingCity,
+	ShippingState     : flowVars.input.shippingState,
+	ShippingPostalCode: flowVars.input.shippingPostalCode,
+	ShippingCountry   : flowVars.input.shippingCountry
 }]]></dw:set-payload>
                 </dw:transform-message>
                 <sfdc:update-single config-ref="Salesforce__Basic_Authentication" type="Account" doc:name="Update Single Account">
