@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:mock="http://www.mulesoft.org/schema/mule/mock" xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:core="http://www.mulesoft.org/schema/mule/core" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
+http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/mock http://www.mulesoft.org/schema/mule/mock/current/mule-mock.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
+    <munit:config mock-connectors="false" mock-inbounds="false" doc:name="MUnit configuration"/>
+    <context:property-placeholder location="mule.test.properties"/>
+    <spring:beans>
+        <spring:import resource="classpath:system-api-sfdc.xml"/>
+    </spring:beans>
+    <http:request-config name="HTTP_Request_Configuration" host="0.0.0.0" port="${http.port}" doc:name="HTTP Request Configuration" basePath="/api">
+        <http:raml-api-configuration location="system-api.raml"/>
+    </http:request-config>
+    <scripting:script name="sfdcAccount" engine="Groovy" doc:name="Script"><![CDATA[Map account = new HashMap();
+
+account.put("Id","123");
+account.put("Name","TestName");
+account.put("BillingStreet","TestStreet");
+account.put("BillingCity","TestCity");
+account.put("BillingPostalCode","123");
+account.put("BillingState","TestState");
+account.put("ShippingStreet","TestShippingStreet");
+account.put("ShippingCity","TestCity");
+account.put("ShippingPostalCode","TestShippingPostalCode");
+account.put("ShippingState","TestShippingState");
+account.put("ShippingCountry","TestShippingCountry");
+account.put("AccountNumber","1234");
+account.put("LastModifiedById","1234");
+return account;]]></scripting:script>
+    <scripting:script name="sfdcAccounts" engine="Groovy" doc:name="Script"><![CDATA[List accounts = new ArrayList();
+
+Map account1 = new HashMap();
+Map account2 = new HashMap();
+
+account1.put("Id","1");
+account1.put("Name","TestName1");
+account1.put("BillingStreet","TestStreet1");
+account1.put("BillingCity","TestCity1");
+account1.put("BillingPostalCode","1");
+account1.put("BillingState","TestState1");
+account1.put("ShippingStreet","TestShippingStreet1");
+account1.put("ShippingCity","TestCity1");
+account1.put("ShippingPostalCode","TestShippingPostalCode1");
+account1.put("ShippingState","TestShippingState1");
+account1.put("ShippingCountry","TestShippingCountry1");
+account1.put("AccountNumber","1");
+account1.put("LastModifiedById","1");
+
+account2.put("Id","2");
+account2.put("Name","TestName2");
+account2.put("BillingStreet","TestStreet2");
+account2.put("BillingCity","TestCity2");
+account2.put("BillingPostalCode","2");
+account2.put("BillingState","TestState");
+account2.put("ShippingStreet","TestShippingStreet2");
+account2.put("ShippingCity","TestCity2");
+account2.put("ShippingPostalCode","TestShippingPostalCode2");
+account2.put("ShippingState","TestShippingState2");
+account2.put("ShippingCountry","TestShippingCountry2");
+account2.put("AccountNumber","2");
+account2.put("LastModifiedById","2");
+
+accounts.add(account1);
+accounts.add(account2);
+
+return accounts;]]></scripting:script>
+    <scripting:script name="sfdcSuccess" engine="Groovy" doc:name="Script"><![CDATA[List results = new ArrayList();
+
+HashMap result = new HashMap();
+result.put("success", true);
+
+results.add(result);
+
+return results;
+]]></scripting:script>
+    
+    <munit:test name="test-suite-get:/accounts/{id}:system-api-sfdc-Test" description="Test" >
+        <mock:when messageProcessor=".*:.*" doc:name="Mock 'Query Single Account'">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['Query Single Account']"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[resultOfScript('sfdcAccount')]"/>
+        </mock:when>
+        <mock:spy messageProcessor=".*:.*" doc:name="Spy">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['Salesforce Account to sAPI Account']"/>
+            </mock:with-attributes>
+            <mock:assertions-before-call>
+                <munit:assert-payload-equals message="Invalid input data." expectedValue="#[resultOfScript('sfdcAccount')]" doc:name="Assert Payload"/>
+            </mock:assertions-before-call>
+            <mock:assertions-after-call>
+                <munit:assert-not-null message="Transformation not successfull" doc:name="Assert Not Null Payload"/>
+            </mock:assertions-after-call>
+        </mock:spy>
+        <http:request config-ref="HTTP_Request_Configuration" path="/accounts/{id}" method="GET" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="id" value="123"/>
+            </http:request-builder>
+        </http:request>
+        <object-to-string-transformer doc:name="Object to String"/>
+        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(200))]" doc:name="assert that - http.status eq 200"/>
+    </munit:test>
+    <munit:test name="test-suite-post:/accounts:system-api-sfdc-Test" description="Test" >
+        <mock:when messageProcessor=".*:.*" doc:name="Mock 'Create New Account'">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['Create New Account']"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[{&quot;success&quot; : &quot;true&quot;}]">
+                <mock:invocation-properties>
+                    <mock:invocation-property key="Name" value="#[]"/>
+                    <mock:invocation-property key="Name" value="#[]"/>
+                    <mock:invocation-property key="Name" value="#[]"/>
+                    <mock:invocation-property key="Name" value="#[]"/>
+                    <mock:invocation-property key="Name" value="#[]"/>
+                    <mock:invocation-property key="Name" value="#[]"/>
+                    <mock:invocation-property key="Name" value="#[]"/>
+                </mock:invocation-properties>
+            </mock:then-return>
+        </mock:when>
+        <mock:when messageProcessor=".*:.*" doc:name="Mock 'Get Account Detail'">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['Get Account Detail']"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[{&quot;Name&quot; : &quot;Name&quot;, &quot;AccountNumber&quot;: &quot;12345678912345679&quot;}]"/>
+        </mock:when>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	name : 'Name',
+	billingStreet : 'BillingStreet',
+	billingCity : 'BillingCity',
+	billingState : 'BillingState',
+	billingPostalCode  : 'billingPostalCode',
+	billingCountry     : 'billingCountry',
+	shippingStreet     : 'shippingStreet',
+	shippingCity       : 'shippingCity',
+	shippingState      : 'shippingState',
+	shippingPostalCode : 'shippingPostalCode',
+	shippingCountry    : 'shippingCountry',
+	phone              : 'phone'
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <http:request config-ref="HTTP_Request_Configuration" path="/accounts" method="POST" doc:name="HTTP">
+        </http:request>
+        <object-to-string-transformer doc:name="Object to String"/>
+        <munit:assert-true message="Account not created." condition="#[payload.contains(&quot;Name&quot;)]" doc:name="Assert Account"/>
+    </munit:test>
+    
+    <munit:test name="test-suite-post:/accounts:system-api-sfdc-Test-bad-request" description="Test" >
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <http:request config-ref="HTTP_Request_Configuration" path="/accounts" method="POST" doc:name="HTTP">
+            <http:success-status-code-validator values="400"/>
+        </http:request>
+        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(400))]" doc:name="Assert that - http.status eq 400"/>
+    </munit:test>
+    
+       <munit:test name="test-suite-get:/accounts:system-api-sfdc-Test" description="Test" >
+        <mock:spy messageProcessor=".*:.*" doc:name="Spy">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['Build whereClause for dsql query']"/>
+            </mock:with-attributes>
+            <mock:assertions-after-call>
+                <munit:assert-true message="Cannot assert suc" condition="#[flowVars.whereClause.equals(&quot;AND Name LIKE '%name%' AND LastModifiedDate &lt; 2015-12-11T13:30:00Z AND LastModifiedDate &gt; 2015-12-12T13:30:00Z ORDER BY Name ASC LIMIT 25 OFFSET 0&quot;)]" doc:name="Assert 'Build whereClause for dsql query'"/>
+            </mock:assertions-after-call>
+        </mock:spy>
+        <mock:when messageProcessor=".*:.*" doc:name="Mock 'Search Accounts'">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['Search Accounts']"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[resultOfScript('sfdcAccounts')]"/>
+        </mock:when>
+        <http:request config-ref="HTTP_Request_Configuration" path="/accounts" method="GET" doc:name="HTTP">
+            <http:request-builder>
+                <http:query-param paramName="name" value="name"/>
+                <http:query-param paramName="modifiedAfter" value="2015-12-12T13:30:00Z"/>
+                <http:query-param paramName="modifiedBefore" value="2015-12-11T13:30:00Z"/>
+                <http:query-param paramName="maxResults" value="25"/>
+                <http:query-param paramName="offset" value="0"/>
+                <http:query-param paramName="orderBy" value="name"/>
+                <http:query-param paramName="order" value="asc"/>
+            </http:request-builder>
+        </http:request>
+        <object-to-string-transformer doc:name="Object to String"/>
+        <munit:assert-true message="Assert output failed" condition="#[payload.contains(&quot;TestName1&quot;) &amp;&amp; payload.contains(&quot;TestName2&quot;)]" doc:name="Assert result"/>
+        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(200))]" doc:name="Assert that - http.status eq 200"/>
+    </munit:test>
+    <munit:test name="test-suite-delete:/accounts/{id}:system-api-sfdc-Test-bad-request" description="Test" >
+        <http:request config-ref="HTTP_Request_Configuration" path="/accounts/{id}" method="DELETE" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="id" value="-1"/>
+            </http:request-builder>
+            <http:success-status-code-validator values="404"/>
+        </http:request>
+        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(404))]" doc:name="Assert that - http.status eq 404"/>
+    
+    </munit:test>
+    <munit:test name="test-suite-delete:/accounts/{id}:system-api-sfdc-Test" description="Test" >
+        <mock:when messageProcessor=".*:.*" doc:name="Mock 'Query Single Account'">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['Query Single Account']"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[resultOfScript('sfdcAccount')]"/>
+        </mock:when>
+        <mock:when messageProcessor=".*:.*" doc:name="Mock 'Delete Single Account'">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['Delete Single Account']"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[resultOfScript('sfdcSuccess')]"/>
+        </mock:when>
+        <http:request config-ref="HTTP_Request_Configuration" path="/accounts/{id}" method="DELETE" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="id" value="123123"/>
+            </http:request-builder>
+        </http:request>
+        <object-to-string-transformer doc:name="Object to String"/>
+        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(204))]" doc:name="Assert that - http.status eq 204"/>
+    
+    </munit:test>
+    <munit:test name="test-suite-put:/accounts/{id}:system-api-sfdc-Test-bad-request" description="Test" >
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	name : 'Name',
+	billingStreet : 'BillingStreet',
+	billingCity : 'BillingCity',
+	billingState : 'BillingState',
+	billingPostalCode  : 'billingPostalCode',
+	billingCountry     : 'billingCountry',
+	shippingStreet     : 'shippingStreet',
+	shippingCity       : 'shippingCity',
+	shippingState      : 'shippingState',
+	shippingPostalCode : 'shippingPostalCode',
+	shippingCountry    : 'shippingCountry',
+	phone              : 'phone'
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <http:request config-ref="HTTP_Request_Configuration" path="/accounts/{id}" method="PUT" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="id" value="-1"/>
+            </http:request-builder>
+            <http:success-status-code-validator values="404"/>
+        </http:request>
+        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(404))]" doc:name="Assert that - http.status eq 404"/>
+    
+    </munit:test>
+    
+       <munit:test name="test-suite-put:/accounts/{id}:system-api-sfdc-Test" description="Test" >
+        <mock:when messageProcessor=".*:.*" doc:name="Mock 'Query Single Account'">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['Query Single Account']"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[resultOfScript('sfdcAccount')]"/>
+        </mock:when>
+        <mock:spy messageProcessor=".*:.*" doc:name="Spy">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['sAPI Account to Salesforce Account']"/>
+            </mock:with-attributes>
+            <mock:assertions-before-call>
+                <munit:assert-payload-equals message="Invalid input data." expectedValue="#[resultOfScript('sfdcAccount')]" doc:name="Assert Payload"/>
+            </mock:assertions-before-call>
+            <mock:assertions-after-call>
+                <munit:assert-not-null message="Transformation not succesfull." doc:name="Assert Not Null Payload"/>
+            </mock:assertions-after-call>
+        </mock:spy>
+        <mock:when messageProcessor=".*:.*" doc:name="Mock 'Update Single Account'">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['Update Single Account']"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[{&quot;success&quot; : &quot;true&quot;}]"/>
+        </mock:when>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	name : 'Name',
+	billingStreet : 'BillingStreet',
+	billingCity : 'BillingCity',
+	billingState : 'BillingState',
+	billingPostalCode  : 'billingPostalCode',
+	billingCountry     : 'billingCountry',
+	shippingStreet     : 'shippingStreet',
+	shippingCity       : 'shippingCity',
+	shippingState      : 'shippingState',
+	shippingPostalCode : 'shippingPostalCode',
+	shippingCountry    : 'shippingCountry',
+	phone              : 'phone'
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <http:request config-ref="HTTP_Request_Configuration" path="/accounts/{id}" method="PUT" doc:name="HTTP">
+            <http:request-builder>
+                <http:uri-param paramName="id" value="123123"/>
+            </http:request-builder>
+        </http:request>
+        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(204))]" doc:name="Assert that - http.status eq 204"/>
+    
+    </munit:test>
+    
+</mule>
