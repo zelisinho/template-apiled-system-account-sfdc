@@ -211,7 +211,7 @@ payload map {
 
         <choice doc:name="Does Account Exist?">
             <when expression="#[ payload != empty ]">
-                <dw:transform-message doc:name="prepare delete request">
+                <dw:transform-message doc:name="Prepare delete request">
                     <dw:set-payload><![CDATA[%dw 1.0
 %output application/java
 ---

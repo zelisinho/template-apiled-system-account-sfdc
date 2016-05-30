@@ -132,7 +132,7 @@ return results;
             </mock:with-attributes>
             <mock:then-return payload="#[{&quot;Name&quot; : &quot;Name&quot;, &quot;AccountNumber&quot;: &quot;12345678912345679&quot;}]"/>
         </mock:when>
-        <dw:transform-message doc:name="Transform Message">
+        <dw:transform-message doc:name="Set payload">
             <dw:set-payload><![CDATA[%dw 1.0
 %output application/json
 ---
@@ -158,7 +158,7 @@ return results;
     </munit:test>
     
     <munit:test name="test-suite-post:/accounts:system-api-sfdc-Test-bad-request" description="Test" >
-        <dw:transform-message doc:name="Transform Message">
+        <dw:transform-message doc:name="Set payload">
             <dw:set-payload><![CDATA[%dw 1.0
 %output application/json
 ---
@@ -236,7 +236,7 @@ return results;
     
     </munit:test>
     <munit:test name="test-suite-put:/accounts/{id}:system-api-sfdc-Test-bad-request" description="Test" >
-        <dw:transform-message doc:name="Transform Message">
+        <dw:transform-message doc:name="Set payload">
             <dw:set-payload><![CDATA[%dw 1.0
 %output application/json
 ---
@@ -289,7 +289,7 @@ return results;
             </mock:with-attributes>
             <mock:then-return payload="#[{&quot;success&quot; : &quot;true&quot;}]"/>
         </mock:when>
-        <dw:transform-message doc:name="Transform Message">
+        <dw:transform-message doc:name="Set payload">
             <dw:set-payload><![CDATA[%dw 1.0
 %output application/json
 ---
