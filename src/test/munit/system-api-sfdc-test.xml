@@ -17,6 +17,7 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
     </spring:beans>
     <http:request-config name="HTTP_Request_Configuration" host="0.0.0.0" port="${http.port}" doc:name="HTTP Request Configuration" basePath="/api">
         <http:raml-api-configuration location="system-api.raml"/>
+
     </http:request-config>
     <scripting:script name="sfdcAccount" engine="Groovy" doc:name="Script"><![CDATA[Map account = new HashMap();
 
@@ -102,6 +103,7 @@ return results;
         <http:request config-ref="HTTP_Request_Configuration" path="/accounts/{id}" method="GET" doc:name="HTTP">
             <http:request-builder>
                 <http:uri-param paramName="id" value="123"/>
+
             </http:request-builder>
         </http:request>
         <object-to-string-transformer doc:name="Object to String"/>
@@ -135,10 +137,10 @@ return results;
 %output application/json
 ---
 {
-	name : 'Name',
-	billingStreet : 'BillingStreet',
-	billingCity : 'BillingCity',
-	billingState : 'BillingState',
+	name               : 'Name',
+	billingStreet      : 'BillingStreet',
+	billingCity        : 'BillingCity',
+	billingState       : 'BillingState',
 	billingPostalCode  : 'billingPostalCode',
 	billingCountry     : 'billingCountry',
 	shippingStreet     : 'shippingStreet',
@@ -202,7 +204,7 @@ return results;
     <munit:test name="test-suite-delete:/accounts/{id}:system-api-sfdc-Test-bad-request" description="Test" >
         <http:request config-ref="HTTP_Request_Configuration" path="/accounts/{id}" method="DELETE" doc:name="HTTP">
             <http:request-builder>
-                <http:uri-param paramName="id" value="-1"/>
+                <http:uri-param paramName="id" value="0000000000abcdeAAV"/>
             </http:request-builder>
             <http:success-status-code-validator values="404"/>
         </http:request>
@@ -215,12 +217,14 @@ return results;
                 <mock:with-attribute name="doc:name" whereValue="#['Query Single Account']"/>
             </mock:with-attributes>
             <mock:then-return payload="#[resultOfScript('sfdcAccount')]"/>
+
         </mock:when>
         <mock:when messageProcessor=".*:.*" doc:name="Mock 'Delete Single Account'">
             <mock:with-attributes>
                 <mock:with-attribute name="doc:name" whereValue="#['Delete Single Account']"/>
             </mock:with-attributes>
             <mock:then-return payload="#[resultOfScript('sfdcSuccess')]"/>
+
         </mock:when>
         <http:request config-ref="HTTP_Request_Configuration" path="/accounts/{id}" method="DELETE" doc:name="HTTP">
             <http:request-builder>
@@ -253,7 +257,7 @@ return results;
         </dw:transform-message>
         <http:request config-ref="HTTP_Request_Configuration" path="/accounts/{id}" method="PUT" doc:name="HTTP">
             <http:request-builder>
-                <http:uri-param paramName="id" value="-1"/>
+                <http:uri-param paramName="id" value="0000000000abcdeAAV"/>
             </http:request-builder>
             <http:success-status-code-validator values="404"/>
         </http:request>

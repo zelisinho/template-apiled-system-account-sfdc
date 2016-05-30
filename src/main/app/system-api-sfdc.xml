@@ -36,8 +36,7 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
 }
 %function mapFields(input){ value: fields[lower input] }
 ---
-using (params = inboundProperties.'http.query.params')
-{
+(using (params = inboundProperties.'http.query.params'){
 	// filtering
 	(name:            'AND Name LIKE \'%' ++ params.name ++ '%\'') when params.name != null,
 	(modifiedBefore:  'AND LastModifiedDate < ' ++ params.modifiedBefore as :string) when params.modifiedBefore != null,
@@ -50,12 +49,14 @@ using (params = inboundProperties.'http.query.params')
 	(limit:           'LIMIT ' ++ params.maxResults ++ ' OFFSET ' ++ ( params.offset when (params.offset != null and params.offset >= 0) otherwise 0)) when params.maxResults != null
 } 
 pluck $ 
-joinBy ' '
+joinBy ' ')
 
-]]></dw:set-variable>
+when (sizeOf inboundProperties.'http.query.params') > 0
+otherwise " LIMIT 25"]]></dw:set-variable>
         </dw:transform-message>
-        <logger message="#[flowVars.whereClause]" level="INFO" doc:name="Log whereClause"/>
-        <sfdc:query config-ref="Salesforce__Basic_Authentication" query="dsql:SELECT Id, Name, BillingStreet, BillingCity, BillingPostalCode, BillingState, BillingCountry, ShippingStreet, ShippingCity, ShippingPostalCode, ShippingState, ShippingCountry, AccountNumber, LastModifiedDate, LastModifiedById FROM Account WHERE Id LIKE &quot;*&quot; #[whereClause]" doc:name="Search Accounts"/>
+        <logger message="whereClause: #[org.apache.commons.lang.StringUtils.substringAfter(flowVars.whereClause,&quot;AND &quot;)]" level="INFO" doc:name="Log whereClause"/>
+        <sfdc:query config-ref="Salesforce__Basic_Authentication" query="dsql:SELECT Id, Name, BillingStreet, BillingCity, BillingPostalCode, BillingState, BillingCountry, ShippingStreet, ShippingCity, ShippingPostalCode, ShippingState, ShippingCountry, AccountNumber, LastModifiedDate, LastModifiedById FROM Account 
+#[ (whereClause == empty &amp;&amp; !whereClause.startsWith(&quot;AND&quot;)) ? whereClause : &quot; WHERE &quot; + org.apache.commons.lang.StringUtils.substringAfter(whereClause,&quot;AND &quot;)]" doc:name="Search Accounts"/>
         <dw:transform-message doc:name="Salesforce Account to sAPI Account">
             <dw:set-payload><![CDATA[%dw 1.0
 %output application/json
@@ -207,6 +208,7 @@ payload map {
     </flow>
     <flow name="delete:/accounts/{id}:system-api-config">
         <sfdc:query-single config-ref="Salesforce__Basic_Authentication" query="dsql:SELECT Id FROM Account WHERE Id = '#[message.inboundProperties.'http.uri.params'.id]'" doc:name="Query Single Account"/>
+
         <choice doc:name="Does Account Exist?">
             <when expression="#[ payload != empty ]">
                 <dw:transform-message doc:name="prepare delete request">
