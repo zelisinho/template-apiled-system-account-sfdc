@@ -163,6 +163,8 @@ return results;
 %output application/json
 ---
 {
+	// required field is missing
+	BillingCity: "San Francisco"
 }]]></dw:set-payload>
         </dw:transform-message>
         <http:request config-ref="HTTP_Request_Configuration" path="/accounts" method="POST" doc:name="HTTP">
