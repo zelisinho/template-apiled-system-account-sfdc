@@ -118,7 +118,7 @@ payload map {
             </when>
             <otherwise>
                 <set-property propertyName="http.status" value="#[400]" doc:name="Bad Request"/>
-                <set-payload value="{ &quot;message&quot;: &quot;Creation of new Account was not successful&quot; }" doc:name="Set Payload"/>
+                <set-payload value="{ &quot;message&quot;: &quot;Failed to create new Account&quot; }" doc:name="Set Payload"/>
             </otherwise>
         </choice>
     </flow>
@@ -187,10 +187,18 @@ payload map {
                     <when expression="#[payload.success == false]">
                         <logger message="Update failed #[payload]" level="INFO" doc:name="Log failure"/>
                         <set-property propertyName="http.status" value="#[500]" doc:name="Server Error"/>
-                        <set-payload value="{ &quot;message&quot;: &quot;Server side error&quot; }" doc:name="Server Error"/>
+                        <set-payload value="{ &quot;message&quot;: &quot;Failed to update Account&quot; }" doc:name="Server Error"/>
                     </when>
                     <otherwise>
                         <logger message="Updated successfully" level="INFO" doc:name="Log success"/>
+                        <dw:transform-message doc:name="Prepare JSON output structure">
+                            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	status: "OK"
+}]]></dw:set-payload>
+                        </dw:transform-message>
                     </otherwise>
                 </choice>
             </when>
@@ -224,10 +232,18 @@ payload map {
                     <when expression="#[payload[0].success == false]">
                         <logger message="Delete failed #[payload]" level="INFO" doc:name="Log failure"/>
                         <set-property propertyName="http.status" value="#[500]" doc:name="Server Error"/>
-                        <set-payload value="{ &quot;message&quot;: &quot;Server side error&quot; }" doc:name="Server Error"/>
+                        <set-payload value="{ &quot;message&quot;: &quot;Failed to delete Account&quot; }" doc:name="Server Error"/>
                     </when>
                     <otherwise>
                         <logger message="Deleted successfully" level="INFO" doc:name="Log success"/>
+                        <dw:transform-message doc:name="Prepare JSON output structure">
+                            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	status: "OK"
+}]]></dw:set-payload>
+                        </dw:transform-message>
                     </otherwise>
                 </choice>
             </when>
