@@ -234,7 +234,7 @@ return results;
             </http:request-builder>
         </http:request>
         <object-to-string-transformer doc:name="Object to String"/>
-        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(204))]" doc:name="Assert that - http.status eq 204"/>
+        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(200))]" doc:name="Assert that - http.status eq 200"/>
     
     </munit:test>
     <munit:test name="test-suite-put:/accounts/{id}:system-api-sfdc-Test-bad-request" description="Test" >
@@ -315,7 +315,7 @@ return results;
                 <http:uri-param paramName="id" value="123123"/>
             </http:request-builder>
         </http:request>
-        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(204))]" doc:name="Assert that - http.status eq 204"/>
+        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(200))]" doc:name="Assert that - http.status eq 200"/>
     
     </munit:test>
     
