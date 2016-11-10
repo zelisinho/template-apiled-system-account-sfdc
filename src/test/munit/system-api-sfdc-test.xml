@@ -137,18 +137,22 @@ return results;
 %output application/json
 ---
 {
-	name               : 'Name',
-	billingStreet      : 'BillingStreet',
-	billingCity        : 'BillingCity',
-	billingState       : 'BillingState',
-	billingPostalCode  : 'billingPostalCode',
-	billingCountry     : 'billingCountry',
-	shippingStreet     : 'shippingStreet',
-	shippingCity       : 'shippingCity',
-	shippingState      : 'shippingState',
-	shippingPostalCode : 'shippingPostalCode',
-	shippingCountry    : 'shippingCountry',
-	phone              : 'phone'
+	name           		: 'Name',
+	billingAddress: {
+		street      	: 'BillingStreet',
+		city        	: 'BillingCity',
+		state       	: 'BillingState',
+		postalCode  	: 'billingPostalCode',
+		country     	: 'billingCountry'
+	},
+	shippingAddress: {
+		street     		: 'shippingStreet',
+		city       		: 'shippingCity',
+		state      		: 'shippingState',
+		postalCode 		: 'shippingPostalCode',
+		country    		: 'shippingCountry'
+	},
+	phone              	: 'phone'
 }]]></dw:set-payload>
         </dw:transform-message>
         <http:request config-ref="HTTP_Request_Configuration" path="/accounts" method="POST" doc:name="HTTP">
@@ -234,7 +238,7 @@ return results;
             </http:request-builder>
         </http:request>
         <object-to-string-transformer doc:name="Object to String"/>
-        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(204))]" doc:name="Assert that - http.status eq 204"/>
+        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(200))]" doc:name="Assert that - http.status eq 200"/>
     
     </munit:test>
     <munit:test name="test-suite-put:/accounts/{id}:system-api-sfdc-Test-bad-request" description="Test" >
@@ -243,18 +247,22 @@ return results;
 %output application/json
 ---
 {
-	name : 'Name',
-	billingStreet : 'BillingStreet',
-	billingCity : 'BillingCity',
-	billingState : 'BillingState',
-	billingPostalCode  : 'billingPostalCode',
-	billingCountry     : 'billingCountry',
-	shippingStreet     : 'shippingStreet',
-	shippingCity       : 'shippingCity',
-	shippingState      : 'shippingState',
-	shippingPostalCode : 'shippingPostalCode',
-	shippingCountry    : 'shippingCountry',
-	phone              : 'phone'
+	name 				: 'Name',
+	billingAddress: {
+		street      	: 'BillingStreet',
+		city        	: 'BillingCity',
+		state       	: 'BillingState',
+		postalCode  	: 'billingPostalCode',
+		country     	: 'billingCountry'
+	},
+	shippingAddress: {
+		street     		: 'shippingStreet',
+		city       		: 'shippingCity',
+		state      		: 'shippingState',
+		postalCode 		: 'shippingPostalCode',
+		country    		: 'shippingCountry'
+	},
+	phone              	: 'phone'
 }]]></dw:set-payload>
         </dw:transform-message>
         <http:request config-ref="HTTP_Request_Configuration" path="/accounts/{id}" method="PUT" doc:name="HTTP">
@@ -296,18 +304,22 @@ return results;
 %output application/json
 ---
 {
-	name : 'Name',
-	billingStreet : 'BillingStreet',
-	billingCity : 'BillingCity',
-	billingState : 'BillingState',
-	billingPostalCode  : 'billingPostalCode',
-	billingCountry     : 'billingCountry',
-	shippingStreet     : 'shippingStreet',
-	shippingCity       : 'shippingCity',
-	shippingState      : 'shippingState',
-	shippingPostalCode : 'shippingPostalCode',
-	shippingCountry    : 'shippingCountry',
-	phone              : 'phone'
+	name 				: 'Name',
+	billingAddress: {
+		street      	: 'BillingStreet',
+		city        	: 'BillingCity',
+		state       	: 'BillingState',
+		postalCode  	: 'billingPostalCode',
+		country     	: 'billingCountry'
+	},
+	shippingAddress: {
+		street     		: 'shippingStreet',
+		city       		: 'shippingCity',
+		state      		: 'shippingState',
+		postalCode 		: 'shippingPostalCode',
+		country    		: 'shippingCountry'
+	},
+	phone              	: 'phone'
 }]]></dw:set-payload>
         </dw:transform-message>
         <http:request config-ref="HTTP_Request_Configuration" path="/accounts/{id}" method="PUT" doc:name="HTTP">
@@ -315,7 +327,7 @@ return results;
                 <http:uri-param paramName="id" value="123123"/>
             </http:request-builder>
         </http:request>
-        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(204))]" doc:name="Assert that - http.status eq 204"/>
+        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(200))]" doc:name="Assert that - http.status eq 200"/>
     
     </munit:test>
     
