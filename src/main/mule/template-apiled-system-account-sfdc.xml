@@ -1,0 +1,491 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<http:listener-config name="system-api-httpListenerConfig">
+		<http:listener-connection host="0.0.0.0"
+			port="${http.port}" />
+	</http:listener-config>
+	<apikit:config name="system-api-config" raml="system-api.raml"
+		outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus"
+		doc:name="Router">
+		<apikit:flow-mappings>
+			<apikit:flow-mapping resource="/accounts" action="get"
+				flow-ref="get:\accounts:system-api-config" />
+			<apikit:flow-mapping resource="/accounts/{id}"
+				action="get" flow-ref="get:\accounts\(id):system-api-config" />
+			<apikit:flow-mapping resource="/accounts" action="post"
+				flow-ref="post:\accounts:application\json:system-api-config" />
+			<apikit:flow-mapping resource="/accounts/{id}"
+				action="put" flow-ref="put:\accounts\(id):application\json:system-api-config" />
+			<apikit:flow-mapping resource="/accounts/{id}"
+				action="delete" flow-ref="delete:\accounts\(id):system-api-config" />
+		</apikit:flow-mappings>
+	</apikit:config>
+	<configuration-properties file="mule-artifact.properties"
+		doc:name="Configuration properties" doc:id="314f9112-3a4e-43ac-8488-dbd750a11f87" />
+	<configuration-properties file="common.properties"
+		doc:name="Configuration properties" doc:id="9266d000-bd69-443d-8b01-e4e9746c2087" />
+	<configuration-properties file="mule.${mule.env}.properties"
+		doc:name="Configuration properties" doc:id="b2eb5a2f-60b2-45e2-9d49-9ee314bb60a5" />
+	<salesforce:sfdc-config name="Salesforce_Sfdc_config"
+		doc:name="Salesforce Sfdc config" doc:id="39ccf126-8c42-40cc-aace-eca50c9e811d">
+		<salesforce:basic-connection username="${sfdc.username}"
+			password="${sfdc.password}" securityToken="${sfdc.securityToken}" />
+	</salesforce:sfdc-config>
+	<flow name="system-api-main">
+		<http:listener config-ref="system-api-httpListenerConfig"
+			path="${api.basePath}/*" doc:name="Listener">
+			<http:response statusCode="#[vars.httpStatus default 200]">
+				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+			</http:response>
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+				<http:body>#[payload]</http:body>
+				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+			</http:error-response>
+		</http:listener>
+		<apikit:router doc:name="APIkit Router" config-ref="system-api-config" />
+		<error-handler>
+			<on-error-propagate type="APIKIT:BAD_REQUEST">
+				<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+					xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">400
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:NOT_FOUND">
+				<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+					xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">404
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+				<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+					xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">405
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+				<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+					xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">406
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+				<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+					xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">415
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+				<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+					xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">501
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="system-api-console">
+		<http:listener config-ref="system-api-httpListenerConfig"
+			path="/console/*" doc:name="Listener">
+			<http:response statusCode="#[vars.httpStatus default 200]">
+				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+			</http:response>
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+				<http:body>#[payload]</http:body>
+				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+			</http:error-response>
+		</http:listener>
+		<apikit:console config-ref="system-api-config"
+			doc:name="APIkit Console" />
+		<error-handler>
+			<on-error-propagate type="APIKIT:NOT_FOUND">
+				<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+					xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">404
+						</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="put:\accounts\(id):application\json:system-api-config">
+		<set-variable variableName="input" value="#[payload]"
+			doc:name="Set Input var" doc:id="6bda1f25-ea6f-48a5-b47e-269fe79c32e0"
+			mimeType="application/json" />
+		<salesforce:query-single config-ref="Salesforce_Sfdc_config"
+			doc:name="Query Account" doc:id="ba28eb78-2aec-420a-b299-409bc945b63e">
+			<salesforce:salesforce-query>SELECT Id FROM Account WHERE Id = ':Id'
+			</salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output applicaton/java
+---
+{
+	"Id" : attributes.uriParams.id
+}]]]></salesforce:parameters>
+		</salesforce:query-single>
+		<choice doc:name="Does Account exist?" doc:id="feb046c8-2701-4eb2-97dc-b7a63b68b5d5">
+			<when expression="#[payload.Id != null]">
+				<ee:transform doc:name="sAPI Account to Salesforce Account"
+					doc:id="60e11e1e-d14b-4932-bd02-50b905eec1a7">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	Id                : payload.Id,
+	Name              : vars["input"].name,
+	BillingStreet     : vars["input"].billingAddress.street,
+	BillingCity       : vars["input"].billingAddress.city,
+	BillingState      : vars["input"].billingAddress.state,
+	BillingPostalCode : vars["input"].billingAddress.postalCode,
+	BillingCountry    : vars["input"].billingAddress.country,
+	ShippingStreet    : vars["input"].shippingAddress.street,
+	ShippingCity      : vars["input"].shippingAddress.city,
+	ShippingState     : vars["input"].shippingAddress.state,
+	ShippingPostalCode: vars["input"].shippingAddress.postalCode,
+	ShippingCountry   : vars["input"].shippingAddress.country,
+	Phone             : vars["input"].phone
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<salesforce:update-single config-ref="Salesforce_Sfdc_config"
+					type="Account" doc:name="Update Account" doc:id="ec3692a3-b8a6-4484-a086-a29c6e1372a9" />
+				<choice doc:name="Has the Account been updated?" doc:id="f8ca3c22-8b3c-4dc4-a4c2-7904764d68d6">
+					<when expression="#[payload.success == true]">
+						<logger level="INFO" doc:name="Updated successfully"
+							doc:id="9990dd07-5fae-4398-83a6-29b6da046672" />
+						<set-payload value='{ "status": "OK" }' doc:name="Build response"
+							doc:id="49f8d941-48e9-4d79-9566-4a9986fa6f2c" mimeType="application/json" />
+					</when>
+					<otherwise>
+						<set-variable variableName="httpStatus" value="500"
+							doc:name="Server error" doc:id="bf0bec3a-9ec6-41a4-9d39-5e2c77b48000" />
+						<set-payload value='{ "message": "Delete account request failed!" }'
+							doc:name="Server error response" doc:id="34d0fc60-bd59-463b-a61a-66f309a49d06"
+							mimeType="application/json" />
+					</otherwise>
+				</choice>
+			</when>
+			<otherwise>
+				<set-variable variableName="httpStatus" value="404"
+					doc:name="Set http status" doc:id="bf0bec3a-9ec6-41a4-9d39-5e2c77b48000" />
+				<set-payload value='{ "message": "Resource not found" }'
+					doc:name="Account not found" doc:id="34d0fc60-bd59-463b-a61a-66f309a49d06"
+					mimeType="application/json" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="delete:\accounts\(id):system-api-config">
+		<salesforce:query-single config-ref="Salesforce_Sfdc_config"
+			doc:name="Query Account" doc:id="ba28eb78-2aec-420a-b299-409bc945b63e">
+			<salesforce:salesforce-query>SELECT Id, Name, BillingStreet,
+				BillingCity, BillingPostalCode, BillingState, BillingCountry,
+				ShippingStreet, ShippingCity, ShippingPostalCode, ShippingState,
+				ShippingCountry, AccountNumber, LastModifiedDate, LastModifiedById
+				FROM Account WHERE Id = ':Id'
+			</salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output applicaton/java
+---
+{
+	"Id" : attributes.uriParams.id
+}]]]></salesforce:parameters>
+		</salesforce:query-single>
+		<choice doc:name="Does Account exist?" doc:id="da96b81d-3a65-4e8b-8443-300e271e786b">
+			<when expression="#[payload.Id != null]">
+				<ee:transform doc:name="Prepare delete request"
+					doc:id="1ee46ecc-be22-4deb-8d82-49bc0fa9272e">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+[payload.Id]]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<salesforce:delete config-ref="Salesforce_Sfdc_config"
+					doc:name="Delete" doc:id="d9c4a92e-0d3f-4afe-ab68-ed002157db71" />
+				<choice doc:name="Has the Account been deleted?" doc:id="8f615cdf-9ca2-44b0-84b7-90a55af9e4a5">
+					<when expression="#[payload[0].success == true]">
+						<logger level="INFO" doc:name="Deleted successfully"
+							doc:id="9990dd07-5fae-4398-83a6-29b6da046672" />
+						<set-payload value='{ "status": "OK" }' doc:name="Build response"
+							doc:id="49f8d941-48e9-4d79-9566-4a9986fa6f2c" mimeType="application/json" />
+					</when>
+					<otherwise>
+						<set-variable variableName="httpStatus" value="500"
+							doc:name="Server error" doc:id="bf0bec3a-9ec6-41a4-9d39-5e2c77b48000" />
+						<set-payload value='{ "message": "Delete account request failed!" }'
+							doc:name="Server error response" doc:id="34d0fc60-bd59-463b-a61a-66f309a49d06"
+							mimeType="application/json" />
+					</otherwise>
+				</choice>
+			</when>
+			<otherwise>
+				<set-variable variableName="httpStatus" value="404"
+					doc:name="Set http status" doc:id="bf0bec3a-9ec6-41a4-9d39-5e2c77b48000" />
+				<set-payload value='{ "message": "Resource not found" }'
+					doc:name="Account not found" doc:id="34d0fc60-bd59-463b-a61a-66f309a49d06"
+					mimeType="application/json" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="get:\accounts\(id):system-api-config">
+		<salesforce:query-single config-ref="Salesforce_Sfdc_config"
+			doc:name="Query Account" doc:id="ba28eb78-2aec-420a-b299-409bc945b63e">
+			<salesforce:salesforce-query>SELECT Id, Name, BillingStreet,
+				BillingCity, BillingPostalCode, BillingState, BillingCountry,
+				ShippingStreet, ShippingCity, ShippingPostalCode, ShippingState,
+				ShippingCountry, AccountNumber, LastModifiedDate, LastModifiedById
+				FROM Account WHERE Id = ':Id'
+			</salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output applicaton/java
+---
+{
+	"Id" : attributes.uriParams.id
+}]]]></salesforce:parameters>
+		</salesforce:query-single>
+		<choice doc:name="Does the Account exist?" doc:id="4ae7edbf-2bce-4daf-b95f-154b694c79af">
+			<when expression="#[payload.Id != null]">
+				<ee:transform doc:name="Salesforce Account to sAPI Account"
+					doc:id="f7f6c8af-5855-4fb8-b394-174009c1f262">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	id                  : payload.Id,
+	nativeId            : payload.Id,
+	name                : payload.Name,
+	billingAddress: {
+		street       	: payload.BillingStreet,
+		city         	: payload.BillingCity,
+		state        	: payload.BillingState,
+		postalCode   	: payload.BillingPostalCode,
+		country      	: payload.BillingCountry
+	},
+	shippingAddress: {
+		street      	: payload.ShippingStreet,
+		city        	: payload.ShippingCity,
+		state       	: payload.ShippingState,
+		postalCode  	: payload.ShippingPostalCode,
+		country     	: payload.ShippingCountry
+	},
+	lastModifiedDate    : payload.LastModifiedDate
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<set-variable variableName="httpStatus" value="400"
+					doc:name="Set http status" doc:id="bf0bec3a-9ec6-41a4-9d39-5e2c77b48000" />
+				<set-payload value='{ "message": "Resource not found" }'
+					doc:name="Account not found" doc:id="34d0fc60-bd59-463b-a61a-66f309a49d06"
+					mimeType="application/json" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="get:\accounts:system-api-config">
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+			xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd"
+			doc:name="Build whereClause  for sfdc query">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="whereClause"><![CDATA[%dw 2.0
+import global::Commons
+output application/java
+var fields = {     
+	"name"             : "Name",
+	"lastmodifieddate" : "LastModifiedDate"
+}
+type sqldate = String { format: "YYYY-MM-dd HH:mm:ss" }
+---
+using (params = attributes.queryParams)
+{
+	// filtering
+	(name:            'AND Name LIKE \'%' ++ Commons::escapeSQL(params.name) ++ '%\'') if params.name != null,
+	(modifiedBefore:  'AND LastModifiedDate < ' ++ (((params.modifiedBefore as DateTime)  >> |+00:00|))) if params.modifiedBefore != null,
+	(modifiedAfter:   'AND LastModifiedDate > ' ++ (((params.modifiedAfter as DateTime)  >> |+00:00|))) if params.modifiedAfter != null,
+
+	// ordering
+	(orderBy:         'ORDER BY ' ++ fields[(lower(params.orderBy))] ++ (if (params.order != null and params.order == "desc") ' DESC' else " ASC"  )) if params.'orderBy' != null,
+	
+	// pagination
+	(limit:           'LIMIT ' ++ params.maxResults ++ ' OFFSET ' ++ (if (params.offset != null and params.offset >= 0) params.offset else 0)) if params.maxResults != null
+	
+}
+pluck $
+joinBy ' '
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<salesforce:query config-ref="Salesforce_Sfdc_config"
+			doc:name="Query Accounts" doc:id="5e48d3b9-ed92-4b32-a106-98372b0a1d6e">
+			<salesforce:salesforce-query>#[&quot;SELECT Id, Name, BillingStreet,
+				BillingCity, BillingPostalCode, BillingState, BillingCountry,
+				ShippingStreet, ShippingCity, ShippingPostalCode, ShippingState,
+				ShippingCountry, AccountNumber, LastModifiedDate, LastModifiedById
+				FROM Account WHERE Id != null &quot;++ vars.whereClause]</salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Salesforce Account to sAPI Account"
+			doc:id="47dbbdeb-e269-4872-bd25-051936089541">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map {
+	id                  : $.Id,
+	nativeId            : $.NativeId,
+	name                : $.Name,
+	email               : $.Email,
+	phone               : $.Phone,
+	billingAddress: {
+		street       	: $.BillingStreet,
+		city         	: $.BillingCity,
+		state        	: $.BillingState,
+		postalCode   	: $.BillingPostalCode,
+		country      	: $.BillingCountry
+	},
+	shippingAddress: {
+		street      	: $.ShippingStreet,
+		city        	: $.ShippingCity,
+		state       	: $.ShippingState,
+		postalCode  	: $.ShippingPostalCode,
+		country     	: $.ShippingCountry
+	},	
+	lastModifiedDate    : $.LastModifiedDate,
+	LastModifiedById	: $.LastModifiedById
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="post:\accounts:application\json:system-api-config">
+		<ee:transform doc:name="Map input to sfdc Account"
+			doc:id="182483b7-b5c8-434c-8864-d7cfbbc6ef39">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	Name               : payload.name,
+	BillingStreet      : payload.billingAddress.street,
+	BillingCity        : payload.billingAddress.city,
+	BillingState       : payload.billingAddress.state,
+	BillingPostalCode  : payload.billingAddress.postalCode,
+	BillingCountry     : payload.billingAddress.country,
+	ShippingStreet     : payload.shippingAddress.street,
+	ShippingCity       : payload.shippingAddress.city,
+	ShippingState      : payload.shippingAddress.state,
+	ShippingPostalCode : payload.shippingAddress.postalCode,
+	ShippingCountry    : payload.shippingAddress.country,
+	Phone              : payload.phone
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create-single config-ref="Salesforce_Sfdc_config"
+			type="Account" doc:name="Create Account" doc:id="de62d54c-1bd9-44c1-a76d-e4de44993d50" />
+		<choice doc:name="Successful?" doc:id="3687dda5-5df4-4f73-adba-a08d728955d3">
+			<when expression="#[payload.success == true]">
+				<salesforce:query-single config-ref="Salesforce_Sfdc_config"
+					doc:name="Query Account" doc:id="498b976e-08b8-4cb4-86db-41f27c29a2dc">
+					<salesforce:salesforce-query>SELECT Name, Id FROM Account WHERE Id=
+						':Id'</salesforce:salesforce-query>
+					<salesforce:parameters><![CDATA[#[output applicaton/java
+---
+{
+	"Id" : payload.id
+}]]]></salesforce:parameters>
+				</salesforce:query-single>
+				<set-variable variableName="outboundHeaders"
+					value="#[{ 'Location':'http://${api.domain}:${http.port}/${api.basePath}/accounts/' ++ payload.Id }]"
+					doc:name="Set Location header" doc:id="c9ba022c-5e45-4dca-a353-e5df91ce3625" />
+				<ee:transform doc:name="Build Response"
+					doc:id="324c2f22-500d-4f7d-9f64-cacc23e39ca8">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	id: payload.Id,
+	name: payload.Name
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<set-variable variableName="httpStatus" value="400"
+					doc:name="Bad Request" doc:id="bf0bec3a-9ec6-41a4-9d39-5e2c77b48000" />
+				<set-payload value='{ "message": "Failed to create new Account" }'
+					doc:name="Failed to create account" doc:id="34d0fc60-bd59-463b-a61a-66f309a49d06"
+					mimeType="application/json" />
+			</otherwise>
+		</choice>
+	</flow>
+</mule>
