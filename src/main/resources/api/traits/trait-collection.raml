@@ -7,6 +7,7 @@ queryParameters:
       The maximum number of entries to return. This is optional.
     type: integer
     default: 25
+    required: false
   offset:
     displayName: Starting from Record
     description: |
@@ -14,14 +15,17 @@ queryParameters:
     type: integer
     minimum: 0
     default: 0
+    required: false
   orderBy:
     displayName: Order by
     description: |
       Fields to order by (lowercase).
     type: string
+    required: false
   order:
     displayName: Order
     description: |
       Ascending or descending order
     type: string
     enum: [asc, desc]
+    required: false
