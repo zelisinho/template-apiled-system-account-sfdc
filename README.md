@@ -30,7 +30,7 @@ This Anypoint Template is a REST API implemented using APIkit and RAML definitio
 Below are the endpoints that are implemented.
 
 ### GET /accounts
-Retrieves accounts from Salesforce based on the combination of query parameters. At least one of `modifiedAfter` or   `name` should be set to retrieve results. Look at the included RAML definition to learn more about the implemented query parameters.
+Retrieves accounts from Salesforce based on the combination of query parameters. At least one of `modifiedAfter` or `name` should be set to retrieve results. Look at the included RAML definition to learn more about the implemented query parameters.
 
 ### POST /accounts
 Inserts new Account to Salesforce
@@ -42,7 +42,7 @@ Retrieves an Account based on the given Salesforce native identifier.
 Updates an Account with the data in the HTTP request. All fields are overwritten.
 
 ### DELETE /accounts/{id}
-Deletes specific Account based on the given Salesforce native identifier. 
+Deletes specific Account based on the given Salesforce native identifier.
 
 
 Look at the included self-descriptive RAML definition and the corresponding flows to learn more about the flows.
@@ -50,7 +50,7 @@ Look at the included self-descriptive RAML definition and the corresponding flow
 # Considerations <a name="considerations"/>
 
 To make this Anypoint Template run, there are certain preconditions that must be considered. All of them deal with the preparations, that must be made in order for all to run smoothly.
-**Failling to do so could lead to unexpected behavior of the template.**
+**Failing to do so could lead to unexpected behavior of the template.**
 
 ## Salesforce Considerations <a name="salesforceconsiderations"/>
 
@@ -106,7 +106,7 @@ First thing to know if you are a newcomer to Mule is where to get the tools.
 
 
 ### Importing an Anypoint Template into Studio
-Mule Studio offers several ways to import a project into the workspace, for instance: 
+Mule Studio offers several ways to import a project into the workspace, for instance:
 
 + Anypoint Studio generated Deployable Archive (.jar)
 + Anypoint Studio Project from External Location
@@ -119,13 +119,13 @@ Once you have imported you Anypoint Template into Anypoint Studio you need to fo
 
 + Locate the properties file `mule.dev.properties`, in src/main/resources
 + Complete all the properties required as per the examples in the section [Properties to be configured](#propertiestobeconfigured)
-+ Once that is done, right click on you Anypoint Template project folder 
++ Once that is done, right click on you Anypoint Template project folder
 + Hover you mouse over `"Run as"`
 + Click on  `"Mule Application"`
 
 
 ### Running on Mule ESB stand alone <a name="runonmuleesbstandalone"/>
-Complete all properties in one of the property files, for example in [mule.prod.properties] (../master/src/main/resources/mule.prod.properties) and run your app with the corresponding environment variable to use it. To follow the example, this will be `mule.env=prod`. 
+Complete all properties in one of the property files, for example in [mule.prod.properties](../master/src/main/resources/mule.prod.properties) and run your app with the corresponding environment variable to use it. To follow the example, this will be `mule.env=prod`.
 
 
 ## Running on CloudHub <a name="runoncloudhub"/>
@@ -143,7 +143,7 @@ In order to use this Mule Anypoint Template you need to configure properties (Cr
 **Common configuration**
 
 + http.port `9090`
-		
+
 **Salesforce Connector configuration**
 
 + sfdc.username `user@company.com`
@@ -172,6 +172,3 @@ A functional aspect of this Anypoint Template implemented in this XML is to crea
 Configuration for Connectors and [Properties Place Holders](http://www.mulesoft.org/documentation/display/current/Configuring+Properties) are also set in this file. **Even though you can change the configuration here, all parameters that can be modified here are in properties file, and this is the recommended place to do it so.** Of course if you want to do core changes to the logic you will probably need to modify this file.
 
 In the visual editor they can be found on the *Global Element* tab.
-
-
-
