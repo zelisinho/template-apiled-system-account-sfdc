@@ -249,7 +249,7 @@ output application/java
                 <salesforce:delete config-ref="Salesforce_Sfdc_config" doc:name="Delete" doc:id="d9c4a92e-0d3f-4afe-ab68-ed002157db71" />
                 <choice doc:name="Has the Account been deleted?" doc:id="8f615cdf-9ca2-44b0-84b7-90a55af9e4a5">
                     <when expression="#[payload[0].success == true]">
-                        <logger level="INFO" doc:name="Deleted successfully" doc:id="9990dd07-5fae-4398-83a6-29b6da046672" message="Deleted successfully"/>
+                        <logger level="INFO" doc:name="Deleted successfully" doc:id="9990dd07-5fae-4398-83a6-29b6da046672" message="Deleted successfully" />
                         <set-payload value='{ "status": "OK" }' doc:name="Build response" doc:id="49f8d941-48e9-4d79-9566-4a9986fa6f2c"
                             mimeType="application/json" />
                     </when>

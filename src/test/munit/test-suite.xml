@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools" xmlns="http://www.mulesoft.org/schema/mule/core"
-    xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-    xsi:schemaLocation="
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+    xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
 		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
 		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
     <munit:config name="test-suite.xml" />
     <configuration-properties doc:name="Configuration properties" doc:id="4d1cfd27-37cf-4e7e-b110-8f153d066ea4"
         file="mule.test.properties" />
@@ -18,219 +19,81 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
         basePath="${api.basePath}">
         <http:request-connection host="${api.domain}" port="${http.port}" />
     </http:request-config>
-    <munit:before-test name="test-suiteBefore_Test" description="Before tests actions" doc:id="e296b10e-17b3-49a1-a4db-8e400b5871ad">
-        <ee:transform doc:name="Set sfdcAccount" doc:id="9dad79ff-945e-4357-8e7a-de889c231c8b">
-            <ee:message>
-            </ee:message>
-            <ee:variables>
-                <ee:set-variable variableName="sfdcAccount"><![CDATA[%dw 2.0
-output application/java
+    <munit:test name="test-suite-get:accounts:system-api-sfdc-Test" description="MUnit Test" doc:id="46dcb846-8e61-4014-b3d8-4997a4edc3a4">
+		<munit:enable-flow-sources >
+			<munit:enable-flow-source value="system-api-main" />
+			<munit:enable-flow-source value="get:\accounts:system-api-config" />
+		</munit:enable-flow-sources>
+		<munit:behavior >
+			<munit-tools:spy doc:name="Spy" doc:id="d6ceec3f-3d94-4453-9a8c-4beb2ba5ae16" processor=".*:.*" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute attributeName="doc:name" whereValue="Build whereClause  for sfdc query" />
+				</munit-tools:with-attributes>
+				<munit-tools:after-call >
+					<munit-tools:assert-that doc:name="Assert 'Build whereClause for dsql query'" doc:id="ce8f9cd8-7cd1-4590-b453-15956cc2256b" expression="#[vars.whereClause]" is="#[MunitTools::equalTo(&quot;AND Name LIKE '%Test%' AND LastModifiedDate &lt; 2018-06-01T00:00:00Z AND LastModifiedDate &gt; 2017-01-01T00:00:00Z ORDER BY Name ASC LIMIT 5 OFFSET 0&quot;)]" />
+				</munit-tools:after-call>
+			</munit-tools:spy>
+		</munit:behavior>
+		<munit:execution >
+			<http:request method="GET" doc:name="HTTP GET Request" doc:id="b4dbefde-132d-4790-8795-eb880fe2e5b6" config-ref="HTTP_Request_Configuration" path="/accounts" >
+				<http:query-params ><![CDATA[#[output applicaton/java
 ---
 {
-    "Id" : "123",
-    "Name" : "TestName",
-    "BillingStreet" : "TestStreet",
-    "BillingCity" : "TestCity",
-    "BillingPostalCode" : "123",
-    "BillingState" : "TestState",
-    "ShippingStreet" : "TestShippingStreet",
-    "ShippingCity" : "TestCity",
-    "ShippingPostalCode" : "TestShippingPostalCode",
-    "ShippingState" : "TestShippingState",
-    "ShippingCountry" : "TestShippingCountry",
-    "AccountNumber" : "1234",
-    "LastModifiedById" : "1234"
-}]]></ee:set-variable>
-            </ee:variables>
-        </ee:transform>
-        <ee:transform doc:name="Set sfdcAccounts" doc:id="8d8cab12-e1b5-4e53-b8e3-4bddc9845c28">
-            <ee:message>
-            </ee:message>
-            <ee:variables>
-                <ee:set-variable variableName="sfdcAccounts"><![CDATA[%dw 2.0
-output application/java
----
-[
-	{
-		"Id" : "1",
-		"Name" : "TestName1",
-		"BillingStreet" : "TestStreet1",
-		"BillingCity" : "TestCity1",
-		"BillingPostalCode" : "1",
-		"BillingState" : "TestState1",
-		"ShippingStreet" : "TestShippingStreet1",
-		"ShippingCity" : "TestCity1",
-		"ShippingPostalCode" : "TestShippingPostalCode1",
-		"ShippingState" : "TestShippingState1",
-		"ShippingCountry" : "TestShippingCountry1",
-		"AccountNumber" : "1",
-		"LastModifiedById" : "1"
-	},
-	{
-		"Id" : "2",
-		"Name" : "TestName2",
-		"BillingStreet" : "TestStreet2",
-		"BillingCity" : "TestCity2",
-		"BillingPostalCode" : "2",
-		"BillingState" : "TestState",
-		"ShippingStreet" : "TestShippingStreet2",
-		"ShippingCity" : "TestCity2",
-		"ShippingPostalCode" : "TestShippingPostalCode2",
-		"ShippingState" : "TestShippingState2",
-		"ShippingCountry" : "TestShippingCountry2",
-		"AccountNumber" : "2",
-		"LastModifiedById" : "2"
-	}
-]]]></ee:set-variable>
-            </ee:variables>
-        </ee:transform>
-    </munit:before-test>
-    <munit:test name="test-suite-get:accounts:system-api-sfdc-Test" description="MUnit Test" doc:id="177004cb-8db0-40c3-b04e-6304b81aa6c1">
-        <munit:enable-flow-sources>
-            <munit:enable-flow-source value="system-api-main" />
-            <munit:enable-flow-source value="get:\accounts:system-api-config" />
-        </munit:enable-flow-sources>
-        <munit:behavior>
-            <munit-tools:spy doc:name="Spy" doc:id="d6ceec3f-3d94-4453-9a8c-4beb2ba5ae16" processor=".*:.*">
-                <munit-tools:with-attributes>
-                    <munit-tools:with-attribute attributeName="doc:name" whereValue="Build whereClause  for sfdc query" />
-                </munit-tools:with-attributes>
-                <munit-tools:after-call>
-                    <munit-tools:assert-that doc:name="Assert 'Build whereClause for dsql query'" doc:id="ce8f9cd8-7cd1-4590-b453-15956cc2256b"
-                        expression="#[vars.whereClause]"
-                        is="#[MunitTools::equalTo(&quot;AND Name LIKE '%name%' AND LastModifiedDate &lt; 2015-12-11T13:30:00Z AND LastModifiedDate &gt; 2015-12-12T13:30:00Z ORDER BY Name ASC LIMIT 25 OFFSET 0&quot;)]" />
-                </munit-tools:after-call>
-            </munit-tools:spy>
-            <munit-tools:mock-when doc:name="Mock 'Query Accounts'" doc:id="7f669188-4249-49c8-8700-f6a6635d8211"
-                processor=".*:.*">
-                <munit-tools:with-attributes>
-                    <munit-tools:with-attribute attributeName="doc:name" whereValue="Query Accounts" />
-                </munit-tools:with-attributes>
-                <munit-tools:then-return>
-                    <munit-tools:payload value="#[vars.sfdcAccounts]" />
-                </munit-tools:then-return>
-            </munit-tools:mock-when>
-        </munit:behavior>
-        <munit:execution>
-            <http:request method="GET" doc:name="HTTP GET Request" doc:id="b4dbefde-132d-4790-8795-eb880fe2e5b6" config-ref="HTTP_Request_Configuration"
-                path="/accounts">
-                <http:query-params><![CDATA[#[output applicaton/java
----
-{
-	"name" : "name",
+	"name" : "Test",
 	"match" : "like",
-	"modifiedAfter" : "2015-12-12T13:30:00.000Z",
-	"modifiedBefore" : "2015-12-11T13:30:00.000Z",
-	"maxResults" : "25",
+	"modifiedAfter" : "2017-01-01T00:00:00.000Z",
+	"modifiedBefore" : "2018-06-01T00:00:00.000Z",
+	"maxResults" : "5",
 	"offset" : "0",
 	"orderBy" : "name",
 	"order" : "asc"
 }]]]></http:query-params>
-            </http:request>
-        </munit:execution>
-        <munit:validation>
-            <ee:transform doc:name="Stream -&gt; String" doc:id="b053f0c8-fa82-49d7-a399-932f51002979">
-                <ee:message>
-                    <ee:set-payload><![CDATA[%dw 2.0
+			</http:request>
+		</munit:execution>
+		<munit:validation >
+			<ee:transform doc:name="Stream -&gt; String" doc:id="b053f0c8-fa82-49d7-a399-932f51002979" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
 output application/java
 ---
 payload]]></ee:set-payload>
-                </ee:message>
-            </ee:transform>
-            <munit-tools:assert-that doc:name="Assert that the first item is correct" doc:id="4d0db29b-c13c-47bf-a562-dae6a71e3be0"
-                expression="#[payload[0].name]" message="Assert output failed" is='#[MunitTools::equalTo("TestName1")]' />
-			<munit-tools:assert-that doc:name="Assert that the second item is correct" doc:id="4d0db29b-c13c-47bf-a562-dae6a71e3be0" expression="#[payload[1].name]" is='#[MunitTools::equalTo("TestName2")]' message="Assert output failed" />
+				</ee:message>
+			</ee:transform>
+			<munit-tools:assert-that doc:name="Assert that number of records is correct" doc:id="4d0db29b-c13c-47bf-a562-dae6a71e3be0" expression="#[sizeOf(payload)]" is='#[MunitTools::equalTo(5)]' message="Number of records is incorrect!"/>
 			<munit-tools:assert-that doc:name="Assert that http.status eq 200" doc:id="1449487c-a810-4919-a567-a09780f6414c" expression="#[attributes.statusCode]" is="#[MunitTools::equalTo(200)]" message="The HTTP Status code is not correct!" />
-        </munit:validation>
-    </munit:test>
-	<munit:test name="test-suite-get:accounts_id:system-api-sfdc-Test" description="MUnit Test" doc:id="a07c563f-f452-48e3-8d94-8def57eb34f3">
-        <munit:enable-flow-sources>
-            <munit:enable-flow-source value="system-api-main" />
-            <munit:enable-flow-source value="get:\accounts\(id):system-api-config" />
-        </munit:enable-flow-sources>
-        <munit:behavior>
-            <munit-tools:mock-when doc:name="Mock 'Query Account'" doc:id="1a3b6c73-e305-4151-9f35-28870f16b262"
-                processor=".*:.*">
-                <munit-tools:with-attributes>
-                    <munit-tools:with-attribute attributeName="doc:name" whereValue="Query Account" />
-                </munit-tools:with-attributes>
-                <munit-tools:then-return>
-                    <munit-tools:payload value="#[vars.sfdcAccount]" />
-                </munit-tools:then-return>
-            </munit-tools:mock-when>
-            <munit-tools:spy doc:name="Spy" doc:id="2a62d9df-827c-48fe-8d82-face03cfbe2d" processor=".*:.*">
-                <munit-tools:with-attributes>
-                    <munit-tools:with-attribute attributeName="doc:name" whereValue="Salesforce Account to sAPI Account" />
-                </munit-tools:with-attributes>
-                <munit-tools:before-call>
-                    <ee:transform doc:name="Set sfdcAccount" doc:id="e888bd1d-4f6b-4e6f-a11a-6977bf23bcca">
-                        <ee:message />
-                        <ee:variables>
-                            <ee:set-variable variableName="sfdcAccount"><![CDATA[%dw 2.0
-output application/java
+		</munit:validation>
+	</munit:test>
+	<munit:test name="test-suite-get:accounts_id:system-api-sfdc-Test" description="MUnit Test" doc:id="451a13d7-0763-47d0-aec6-53aa02748e58">
+		<munit:enable-flow-sources >
+			<munit:enable-flow-source value="system-api-main" />
+			<munit:enable-flow-source value="get:\accounts\(id):system-api-config" />
+		</munit:enable-flow-sources>
+		<munit:execution >
+        <flow-ref doc:name="insertAccountToSfdc" doc:id="f82b2a38-df37-4e4c-81a5-0d63709929a1" name="insertAccountToSfdc" />
+			<http:request method="GET" doc:name="HTTP GET Request" doc:id="f05ff0a1-438a-42e4-8f5c-d6f9785e1fdd" config-ref="HTTP_Request_Configuration" path="/accounts/{id}" >
+				<http:uri-params ><![CDATA[#[output applicaton/java
 ---
 {
-    "Id" : "123",
-    "Name" : "TestName",
-    "BillingStreet" : "TestStreet",
-    "BillingCity" : "TestCity",
-    "BillingPostalCode" : "123",
-    "BillingState" : "TestState",
-    "ShippingStreet" : "TestShippingStreet",
-    "ShippingCity" : "TestCity",
-    "ShippingPostalCode" : "TestShippingPostalCode",
-    "ShippingState" : "TestShippingState",
-    "ShippingCountry" : "TestShippingCountry",
-    "AccountNumber" : "1234",
-    "LastModifiedById" : "1234"
-}
-]]></ee:set-variable>
-                        </ee:variables>
-                    </ee:transform>
-					<munit-tools:assert-that doc:name="Assert Payload" doc:id="17e97fb9-be9e-457c-8443-3ae8c9d1bc06" expression="#[payload]" message="Invalid input data." is="#[MunitTools::equalTo(vars.sfdcAccount)]"/>
-				</munit-tools:before-call>
-                <munit-tools:after-call>
-                    <munit-tools:assert-that doc:name="Assert Not Null Payload" doc:id="2d378f8b-5778-4551-b8df-7505d7c584de"
-                        expression="#[payload]" message="Transformation is not successfull" is="#[MunitTools::notNullValue()]" />
-                </munit-tools:after-call>
-            </munit-tools:spy>
-        </munit:behavior>
-        <munit:execution>
-            <http:request method="GET" doc:name="HTTP GET Request" doc:id="f05ff0a1-438a-42e4-8f5c-d6f9785e1fdd" config-ref="HTTP_Request_Configuration"
-                path="/accounts/{id}">
-                <http:uri-params><![CDATA[#[output applicaton/java
----
-{
-	"id" : "123"
+	"id" : payload.Id
 }]]]></http:uri-params>
-            </http:request>
-        </munit:execution>
-        <munit:validation>
-            <munit-tools:assert-that doc:name="Assert that http.status eq 200" doc:id="1449487c-a810-4919-a567-a09780f6414c"
-                expression="#[attributes.statusCode]" is="#[MunitTools::equalTo(200)]" message="The HTTP Status code is not correct!" />
-        </munit:validation>
-    </munit:test>
+			</http:request>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that http.status eq 200" doc:id="1449487c-a810-4919-a567-a09780f6414c" expression="#[attributes.statusCode]" is="#[MunitTools::equalTo(200)]" message="The HTTP Status code is not correct!" />
+			<flow-ref doc:name="deleteAccountFromSfdc" doc:id="dc7d08a0-9e94-4b4a-b0fe-1fb92a054ca1" name="deleteAccountFromSfdc"/>
+		</munit:validation>
+	</munit:test>
 	<munit:test name="test-suite-get:accounts_id:system-api-sfdc-Test-not-found" description="MUnit Test" doc:id="eff5c796-b0df-47e8-9e51-4833f699ffec" expectedErrorType="HTTP:NOT_FOUND">
 		<munit:enable-flow-sources >
 			<munit:enable-flow-source value="system-api-main" />
 			<munit:enable-flow-source value="get:\accounts\(id):system-api-config" />
 		</munit:enable-flow-sources>
-		<munit:behavior>
-			<munit-tools:mock-when doc:name="Mock 'Query Account'" doc:id="02453cd7-edc8-418a-9b74-9680255749ff" processor=".*:.*">
-				<munit-tools:with-attributes>
-					<munit-tools:with-attribute attributeName="doc:name" whereValue="Query Account" />
-				</munit-tools:with-attributes>
-				<munit-tools:then-return>
-					<munit-tools:payload value="#[[]]" />
-				</munit-tools:then-return>
-			</munit-tools:mock-when>
-		</munit:behavior>
 		<munit:execution >
 			<http:request method="GET" doc:name="HTTP GET Request" doc:id="a4d54c0c-ef32-47f6-bd0e-a895214b540e" config-ref="HTTP_Request_Configuration" path="/accounts/{id}">
 				<http:uri-params ><![CDATA[#[output applicaton/java
 ---
 {
-	"id" : "0000000000"
+	"id" : "000000000000000000"
 }]]]></http:uri-params>
 			</http:request>
 		</munit:execution>
@@ -238,32 +101,14 @@ output application/java
 			<munit-tools:assert-that doc:name="Assert that http.status eq 404" doc:id="1449487c-a810-4919-a567-a09780f6414c" expression="#[attributes.statusCode]" is="#[MunitTools::equalTo(404)]" message="The HTTP Status code is not correct!" />
 		</munit:validation>
 	</munit:test>
-	<munit:test name="test-suite-post:accounts:system-api-sfdc-Test" description="MUnit Test" doc:id="cae09929-1475-4d04-988c-6944a5df9e18">
+	<munit:test name="test-suite-post:accounts:system-api-sfdc-Test" description="MUnit Test" doc:id="4fad704c-1fc8-4352-8aab-a721527979b8">
 		<munit:enable-flow-sources >
-			<munit:enable-flow-source value="post:\accounts:application\json:system-api-config" />
 			<munit:enable-flow-source value="system-api-main" />
+			<munit:enable-flow-source value="post:\accounts:application\json:system-api-config" />
 		</munit:enable-flow-sources>
-		<munit:behavior >
-			<munit-tools:mock-when doc:name="Mock 'Create Account'" doc:id="078d7f26-b14c-4fbe-ae65-542c4f79e7e6" processor=".*:.*">
-				<munit-tools:with-attributes>
-					<munit-tools:with-attribute attributeName="doc:name" whereValue="Create New Account" />
-				</munit-tools:with-attributes>
-				<munit-tools:then-return >
-					<munit-tools:payload value='#[{"success" : "true"}]' />
-				</munit-tools:then-return>
-			</munit-tools:mock-when>
-			<munit-tools:mock-when doc:name="Mock 'Query Account'" doc:id="c67e7565-f1f0-426d-86c1-0f17d24eabb5" processor=".*:.*">
-				<munit-tools:with-attributes >
-					<munit-tools:with-attribute attributeName="doc:name" whereValue="Query Account" />
-				</munit-tools:with-attributes>
-				<munit-tools:then-return >
-					<munit-tools:payload value='#[{"Id" : "1234", "Name" : "Name", "AccountNumber": "12345678912345679"}]' />
-				</munit-tools:then-return>
-			</munit-tools:mock-when>
-		</munit:behavior>
 		<munit:execution >
 			<set-payload value='{
-	"name"           		: "Name",
+	"name"           		: "test-template-apiled-system-account-sfdc",
 	"billingAddress": {
 		"street"      	: "BillingStreet",
 		"city"        	: "BillingCity",
@@ -278,12 +123,13 @@ output application/java
 		"postalCode" 		: "shippingPostalCode",
 		"country"    		: "shippingCountry"
 	},
-	"phone"              	: "phone"
-}' doc:name="Set Payload" doc:id="939daf05-f9b8-4ac5-a571-35fa5f93946c" mimeType="application/json"/>
-			<http:request method="POST" doc:name="HTTP POST Request" doc:id="16351566-260d-4edd-a65f-9fa96a833aa4" config-ref="HTTP_Request_Configuration" path="/accounts"/>
+	"phone"              	: "1-425-555-3456"
+}' doc:name="Set Payload" doc:id="939daf05-f9b8-4ac5-a571-35fa5f93946c" mimeType="application/json" />
+			<http:request method="POST" doc:name="HTTP POST Request" doc:id="16351566-260d-4edd-a65f-9fa96a833aa4" config-ref="HTTP_Request_Configuration" path="/accounts" />
 		</munit:execution>
 		<munit:validation >
 			<munit-tools:assert-that doc:name="Assert that http.status eq 201" doc:id="1449487c-a810-4919-a567-a09780f6414c" expression="#[attributes.statusCode]" is="#[MunitTools::equalTo(201)]" message="The HTTP Status code is not correct!" />
+			<flow-ref doc:name="deleteAccountFromSfdc" doc:id="859f677f-e65e-4f84-ac1e-b88244f67f8d" name="deleteAccountFromSfdc"/>
 		</munit:validation>
 	</munit:test>
 	<munit:test name="test-suite-post:accounts:system-api-sfdc-Test-bad-request" description="MUnit Test" doc:id="0cbdafcf-4a3a-4bea-ae7e-d13ce3d5fec6" expectedErrorType="HTTP:BAD_REQUEST">
@@ -301,52 +147,27 @@ output application/java
 			<munit-tools:assert-that doc:name="Assert that http.status eq 400" doc:id="1449487c-a810-4919-a567-a09780f6414c" expression="#[attributes.statusCode]" is="#[MunitTools::equalTo(400)]" message="The HTTP Status code is not correct!" />
 		</munit:validation>
 	</munit:test>
-	<munit:test name="test-suite-delete:accounts_id:system-api-sfdc-Test" description="MUnit Test" doc:id="68ab6bc3-3550-4481-ac27-04226ce230bd">
+	<munit:test name="test-suite-delete:accounts_id:system-api-sfdc-Test" description="MUnit Test" doc:id="ea145112-9c68-4bc5-adac-d27d3b48ad74">
 		<munit:enable-flow-sources >
 			<munit:enable-flow-source value="system-api-main" />
 			<munit:enable-flow-source value="delete:\accounts\(id):system-api-config" />
 		</munit:enable-flow-sources>
-		<munit:behavior >
-			<munit-tools:mock-when doc:name="Mock 'Query Account'" doc:id="b2a10e0e-ba7e-482a-bdde-8bbc34558eb2" processor=".*:.*">
-				<munit-tools:with-attributes >
-					<munit-tools:with-attribute attributeName="doc:name" whereValue="Query Account" />
-				</munit-tools:with-attributes>
-				<munit-tools:then-return >
-					<munit-tools:payload value="#[vars.sfdcAccount]"/>
-				</munit-tools:then-return>
-			</munit-tools:mock-when>
-			<ee:transform doc:name="Set sfdcSuccess" doc:id="28147f67-ee60-48cd-98c1-b04660cf1957" >
-				<ee:message >
-				</ee:message>
-				<ee:variables >
-					<ee:set-variable variableName="sfdcSuccess" ><![CDATA[%dw 2.0
-output application/java
----
-[{
-    "success" : true
-}]]]></ee:set-variable>
-				</ee:variables>
-			</ee:transform>
-			<munit-tools:mock-when doc:name="Mock 'Delete'" doc:id="3b9d0aaa-3ce2-40df-b9de-bb5a9895c694" processor=".*:.*">
-				<munit-tools:with-attributes >
-					<munit-tools:with-attribute attributeName="doc:name" whereValue="Delete" />
-				</munit-tools:with-attributes>
-				<munit-tools:then-return >
-					<munit-tools:payload value="#[vars.sfdcSuccess]" />
-				</munit-tools:then-return>
-			</munit-tools:mock-when>
-		</munit:behavior>
 		<munit:execution >
+			<flow-ref doc:name="insertAccountToSfdc" doc:id="df844563-a3c5-4dc7-bd43-e61908f6550d" name="insertAccountToSfdc" />
 			<http:request method="DELETE" doc:name="HTTP DELETE Request" doc:id="401b9d22-cfa2-4f51-801f-4015bb3dd238" config-ref="HTTP_Request_Configuration" path="/accounts/{id}" >
 				<http:uri-params ><![CDATA[#[output applicaton/java
 ---
 {
-	"id" : "123123"
+	"id" : payload.Id
 }]]]></http:uri-params>
 			</http:request>
 		</munit:execution>
 		<munit:validation >
 			<munit-tools:assert-that doc:name="Assert that http.status eq 200" doc:id="1449487c-a810-4919-a567-a09780f6414c" expression="#[attributes.statusCode]" is="#[MunitTools::equalTo(200)]" message="The HTTP Status code is not correct!" />
+			<salesforce:query doc:id="08ba0172-6dba-4c15-b9d6-d33e146c42c1" doc:name="Select test account" config-ref="Salesforce_Sfdc_config">
+				<salesforce:salesforce-query >SELECT Id FROM Account WHERE Name = 'test-template-apiled-system-account-sfdc'</salesforce:salesforce-query>
+			</salesforce:query>
+			<munit-tools:assert-that doc:name="Assert that there is no test account in Sfdc" doc:id="e452b3a9-44de-4ec1-ab23-01ed5d6c7edf" expression="#[sizeOf(payload)]" is="#[MunitTools::equalTo(0)]" message="There is test account in Sfdc!"/>
 		</munit:validation>
 	</munit:test>
 	<munit:test name="test-suite-delete:accounts_id:system-api-sfdc-Test-not-found" description="MUnit Test" doc:id="28b7e357-db1f-4bda-9d6c-9c42f217796d" expectedErrorType="HTTP:NOT_FOUND">
@@ -354,22 +175,12 @@ output application/java
 			<munit:enable-flow-source value="system-api-main" />
 			<munit:enable-flow-source value="delete:\accounts\(id):system-api-config" />
 		</munit:enable-flow-sources>
-		<munit:behavior >
-			<munit-tools:mock-when doc:name="Mock 'Query Account'" doc:id="0b625860-5ef4-4db9-a5bb-c34b90abe8fb" processor=".*:.*">
-				<munit-tools:with-attributes >
-					<munit-tools:with-attribute attributeName="doc:name" whereValue="Query Account" />
-				</munit-tools:with-attributes>
-				<munit-tools:then-return >
-					<munit-tools:payload value="#[[]]" />
-				</munit-tools:then-return>
-			</munit-tools:mock-when>
-		</munit:behavior>
 		<munit:execution >
 			<http:request method="DELETE" doc:name="HTTP DELETE Request" doc:id="401b9d22-cfa2-4f51-801f-4015bb3dd238" config-ref="HTTP_Request_Configuration" path="/accounts/{id}">
 				<http:uri-params><![CDATA[#[output applicaton/java
 ---
 {
-	"id" : "0000000000"
+	"id" : "000000000000000000"
 }]]]></http:uri-params>
 			</http:request>
 		</munit:execution>
@@ -377,67 +188,16 @@ output application/java
 			<munit-tools:assert-that doc:name="Assert that http.status eq 404" doc:id="1449487c-a810-4919-a567-a09780f6414c" expression="#[attributes.statusCode]" is="#[MunitTools::equalTo(404)]" message="The HTTP Status code is not correct!" />
 		</munit:validation>
 	</munit:test>
-	<munit:test name="test-suite-put:accounts_id_:system-api-sfdc-Test" description="MUnit Test" doc:id="e99be4c4-da17-41eb-8935-edb85eb92b8e">
+	<munit:test name="test-suite-put:accounts_id_:system-api-sfdc-Test" description="MUnit Test" doc:id="8a1fc03f-b5e7-4031-8dfe-03bdcd65b613">
 		<munit:enable-flow-sources >
 			<munit:enable-flow-source value="system-api-main" />
 			<munit:enable-flow-source value="put:\accounts\(id):application\json:system-api-config" />
 		</munit:enable-flow-sources>
-		<munit:behavior >
-			<munit-tools:mock-when doc:name="Mock 'Query Account'" doc:id="36902cbb-790b-42d4-91b3-e97254d14154" processor=".*:.*">
-				<munit-tools:with-attributes >
-					<munit-tools:with-attribute attributeName="doc:name" whereValue="Query Account" />
-				</munit-tools:with-attributes>
-				<munit-tools:then-return >
-					<munit-tools:payload value="#[vars.sfdcAccount]" mediaType="application/java"/>
-				</munit-tools:then-return>
-			</munit-tools:mock-when>
-			<munit-tools:spy doc:name="Spy" doc:id="502dbc4b-381d-44bd-abfe-2ca971ba1655" processor=".*:.*">
-				<munit-tools:with-attributes >
-					<munit-tools:with-attribute attributeName="doc:name" whereValue="sAPI Account to Salesforce Account" />
-				</munit-tools:with-attributes>
-				<munit-tools:before-call >
-                <ee:transform doc:name="Set sfdcAccount" doc:id="e888bd1d-4f6b-4e6f-a11a-6977bf23bcca">
-                        <ee:message />
-                        <ee:variables>
-                            <ee:set-variable variableName="sfdcAccount"><![CDATA[%dw 2.0
-output application/java
----
-{
-    "Id" : "123",
-    "Name" : "TestName",
-    "BillingStreet" : "TestStreet",
-    "BillingCity" : "TestCity",
-    "BillingPostalCode" : "123",
-    "BillingState" : "TestState",
-    "ShippingStreet" : "TestShippingStreet",
-    "ShippingCity" : "TestCity",
-    "ShippingPostalCode" : "TestShippingPostalCode",
-    "ShippingState" : "TestShippingState",
-    "ShippingCountry" : "TestShippingCountry",
-    "AccountNumber" : "1234",
-    "LastModifiedById" : "1234"
-}
-]]></ee:set-variable>
-                        </ee:variables>
-                    </ee:transform>
-					<munit-tools:assert-that doc:name="Assert Payload" doc:id="bbda3225-05ef-4ed3-bbce-df63bf21fecb" message="Invalid input data." expression="#[payload]" is="#[MunitTools::equalTo(vars.sfdcAccount)]"/>
-                </munit-tools:before-call>
-				<munit-tools:after-call >
-					<munit-tools:assert-that doc:name="Assert Not Null Payload" doc:id="2d378f8b-5778-4551-b8df-7505d7c584de" expression="#[payload]" message="Transformation is not successfull" is="#[MunitTools::notNullValue()]"/>
-				</munit-tools:after-call>
-			</munit-tools:spy>
-			<munit-tools:mock-when doc:name="Mock 'Update Account'" doc:id="422707af-337f-46df-bed9-05cb875ed1e4" processor=".*:.*">
-				<munit-tools:with-attributes >
-					<munit-tools:with-attribute attributeName="doc:name" whereValue="Update Account" />
-				</munit-tools:with-attributes>
-				<munit-tools:then-return >
-					<munit-tools:payload value='#[{"success" : true}]' mediaType="application/java"/>
-				</munit-tools:then-return>
-			</munit-tools:mock-when>
-		</munit:behavior>
-        <munit:execution>
-            <set-payload value='{
-	"name"           		: "Name",
+		<munit:execution >
+			<flow-ref doc:name="insertAccountToSfdc" doc:id="36785156-1c51-49be-bfed-b88f3c156bcc" name="insertAccountToSfdc"/>
+			<set-variable value="#[payload.Id]" doc:name="Set accountId" doc:id="db6db184-912d-4e8e-98b0-e5e8efc6b599" variableName="accountId"/>
+			<set-payload value='{
+	"name"           		: "test-template-apiled-system-account-sfdc",
 	"billingAddress": {
 		"street"      	: "BillingStreet",
 		"city"        	: "BillingCity",
@@ -452,37 +212,32 @@ output application/java
 		"postalCode" 		: "shippingPostalCode",
 		"country"    		: "shippingCountry"
 	},
-	"phone"              	: "phone"
-}' doc:name="Set Payload" doc:id="0b3eef2c-e19a-440a-a4df-e047fc6b29e6" mimeType="application/json"/>
-			<http:request method="PUT" doc:name="HTTP PUT Request" doc:id="da88997b-a5ff-441b-80fc-a04de2d5e30b" config-ref="HTTP_Request_Configuration" path="/accounts/{id}">
+	"phone"              	: "1-425-555-3456"
+}' doc:name="Set Payload" doc:id="0b3eef2c-e19a-440a-a4df-e047fc6b29e6" mimeType="application/json" />
+			<http:request method="PUT" doc:name="HTTP PUT Request" doc:id="da88997b-a5ff-441b-80fc-a04de2d5e30b" config-ref="HTTP_Request_Configuration" path="/accounts/{id}" >
 				<http:uri-params ><![CDATA[#[output applicaton/java
 ---
 {
-	"id" : "123123"
+	"id" : vars.accountId
 }]]]></http:uri-params>
 			</http:request>
-        
-</munit:execution>
-        <munit:validation>
-            <munit-tools:assert-that doc:name="Assert that http.status eq 200" doc:id="1449487c-a810-4919-a567-a09780f6414c"
-                expression="#[attributes.statusCode]" is="#[MunitTools::equalTo(200)]" message="The HTTP Status code is not correct!" />
-        </munit:validation>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that http.status eq 200" doc:id="1449487c-a810-4919-a567-a09780f6414c" expression="#[attributes.statusCode]" is="#[MunitTools::equalTo(200)]" message="The HTTP Status code is not correct!" />
+			<salesforce:query-single doc:id="b75f16fd-fde1-47e9-99a9-4d69cb746083" doc:name="Select updated account" config-ref="Salesforce_Sfdc_config" target="updatedAccount">
+				<salesforce:salesforce-query >SELECT Id, Phone FROM Account WHERE Name = 'test-template-apiled-system-account-sfdc'</salesforce:salesforce-query>
+			</salesforce:query-single>
+			<munit-tools:assert-that doc:name="Assert that phone field is updated" doc:id="e24ee5ed-6ad8-45a4-ac07-c9605d3c1f0f" message="Account is not updated!" expression="#[vars.updatedAccount.Phone]" is='#[MunitTools::equalTo("1-425-555-3456")]'/>
+			<salesforce:delete doc:id="623f7e70-1486-4540-a720-5cb477e33f02" doc:name="Delete test account" config-ref="Salesforce_Sfdc_config">
+				<salesforce:delete-ids ><![CDATA[#[[vars.updatedAccount.Id]]]]></salesforce:delete-ids>
+			</salesforce:delete>
+		</munit:validation>
 	</munit:test>
 	<munit:test name="test-suite-put:accounts_id:system-api-sfdc-Test-not-found" description="MUnit Test" doc:id="2b1540f5-6640-45a6-9c62-09a6097cb6c8" expectedErrorType="HTTP:NOT_FOUND">
 		<munit:enable-flow-sources >
 			<munit:enable-flow-source value="system-api-main" />
 			<munit:enable-flow-source value="put:\accounts\(id):application\json:system-api-config" />
 		</munit:enable-flow-sources>
-		<munit:behavior >
-			<munit-tools:mock-when doc:name="Mock 'Query Account'" doc:id="0b625860-5ef4-4db9-a5bb-c34b90abe8fb" processor=".*:.*" >
-				<munit-tools:with-attributes >
-					<munit-tools:with-attribute attributeName="doc:name" whereValue="Query Account" />
-				</munit-tools:with-attributes>
-				<munit-tools:then-return >
-					<munit-tools:payload value="#[[]]" mediaType="application/java"/>
-				</munit-tools:then-return>
-			</munit-tools:mock-when>
-		</munit:behavior>
 		<munit:execution >
 			<set-payload value='{
 	"name"           		: "Name",
@@ -506,7 +261,7 @@ output application/java
 				<http:uri-params ><![CDATA[#[output applicaton/java
 ---
 {
-	"id" : "0000000000"
+	"id" : "000000000000000000"
 }]]]></http:uri-params>
 			</http:request>
 		</munit:execution>
@@ -514,4 +269,26 @@ output application/java
 			<munit-tools:assert-that doc:name="Assert that http.status eq 404" doc:id="1449487c-a810-4919-a567-a09780f6414c" expression="#[attributes.statusCode]" is="#[MunitTools::equalTo(404)]" message="The HTTP Status code is not correct!" />
 		</munit:validation>
 	</munit:test>
+	<sub-flow name="insertAccountToSfdc" doc:id="4fe8c244-80e1-477e-b376-cfcd3c1b78c9" >
+		<ee:transform doc:name="Set test account data" doc:id="70c53a9f-f79a-416f-9e8c-6e1a4172c4e4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	Name               : "test-template-apiled-system-account-sfdc",
+	Phone              : "1-425-555-0000"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create-single doc:id="3329102d-638d-49a2-8d3c-54258578fcfd" doc:name="Create test account" config-ref="Salesforce_Sfdc_config" type="Account"/>
+	</sub-flow>
+	<sub-flow name="deleteAccountFromSfdc" doc:id="0485a831-a817-43ef-bb9a-5afcf21c876b" >
+		<salesforce:query doc:id="e5bd9d97-da65-45fe-a3c2-ccebc4d31862" doc:name="Select test account" config-ref="Salesforce_Sfdc_config">
+			<salesforce:salesforce-query >SELECT Id FROM Account WHERE Name = 'test-template-apiled-system-account-sfdc'</salesforce:salesforce-query>
+		</salesforce:query>
+		<salesforce:delete doc:id="a698742a-6970-494d-a3ff-f89c830b0334" doc:name="Delete test account" config-ref="Salesforce_Sfdc_config">
+			<salesforce:delete-ids ><![CDATA[#[payload.Id]]]></salesforce:delete-ids>
+		</salesforce:delete>
+	</sub-flow>
 </mule>
