@@ -1,28 +1,40 @@
 
 # Anypoint Template: API Led Connectivity System API for Salesforce
 
-+ [License Agreement](#licenseagreement)
-+ [Use Case](#usecase)
-+ [Considerations](#considerations)
-	* [Salesforce Considerations](#sfdcconsiderations)
-+ [Run it!](#runit)
-	* [Running on premise](#runonopremise)
-	* [Running on Studio](#runonstudio)
-	* [Running on Mule ESB stand alone](#runonmuleesbstandalone)
-	* [Running on CloudHub](#runoncloudhub)
-	* [Deploying your template on CloudHub](#deployingyouranypointtemplateoncloudhub)
-	* [Properties to be configured (With examples)](#propertiestobeconfigured)
-+ [Customize It!](#customizeit)
-	* [system-api.xml](#systemapisfdc)
+<!-- Header (start) -->
 
+This Anypoint Template provides a foundation for designing an Account System API. It provides means of hiding the complexity of the Salesforce APIs from a user while exposing data in a canonical format. The template abstracts account data from Salesforce into canonical objects that are defined within a CRM System API. This API uses JSON as an exchange format and translates calls into the semantic data structure required by Salesforce.
 
+![1683785a-c841-4b9c-b0be-df518da10b4e-image.png](https://exchange2-file-upload-service-kprod.s3.us-east-1.amazonaws.com:443/1683785a-c841-4b9c-b0be-df518da10b4e-image.png)
 
-# License Agreement <a name="licenseagreement"/>
-Note that using this template is subject to the conditions of this [License Agreement](AnypointTemplateLicense.pdf).
-Please review the terms of the license before downloading and using this template. In short, you are allowed to use the template for free with Mule ESB Enterprise Edition, CloudHub, or as a trial in Anypoint Studio.
+![8b2b38c3-d6c2-4fc5-a1f4-6933e3b04692-image.png](https://exchange2-file-upload-service-kprod.s3.us-east-1.amazonaws.com:443/8b2b38c3-d6c2-4fc5-a1f4-6933e3b04692-image.png)
 
-# Use Case <a name="usecase"/>
+![d721592e-1f60-4088-b34b-1a293b38ec89-image.png](https://exchange2-file-upload-service-kprod.s3.us-east-1.amazonaws.com:443/d721592e-1f60-4088-b34b-1a293b38ec89-image.png)
+
+![6d95fb54-e5ec-42ee-85d3-4341b2aea803-image.png](https://exchange2-file-upload-service-kprod.s3.us-east-1.amazonaws.com:443/6d95fb54-e5ec-42ee-85d3-4341b2aea803-image.png)
+
+![9265861f-5456-4a3d-b583-8a61a2882343-image.png](https://exchange2-file-upload-service-kprod.s3.us-east-1.amazonaws.com:443/9265861f-5456-4a3d-b583-8a61a2882343-image.png)
+
+## Operations
+
+The CRM System API supports the following operations:
+
+- GET/accounts
+- POST/accounts
+- GET/account/{id}
+- PUT/accounts/{id}
+- DELETE/accounts/{id}
+
+## License Agreement
+
+This template is subject to the conditions of the [MuleSoft License Agreement](https://s3.amazonaws.com/templates-examples/AnypointTemplateLicense.pdf "MuleSoft License Agreement"). Review the terms of the license before downloading and using this template. You can use this template for free with the Mule Enterprise Edition, CloudHub, or as a trial in Anypoint Studio. 
+
+# Use Case
+
+<!-- Use Case (start) -->
+
 This Anypoint template serves as a foundation for API Led Connectivity approach of running an enterprise.
+
 The template is a System API to underlying Salesforce system.
 
 This template is a REST API implemented using APIkit and RAML definition. The basic CRUD operations are implemented for Account object (Customer). The API uses JSON as an exchange format. Included are example requests and responses.
@@ -30,57 +42,58 @@ This template is a REST API implemented using APIkit and RAML definition. The ba
 Below are the endpoints that are implemented.
 
 ### GET /accounts
+
 Retrieves accounts from Salesforce based on the combination of query parameters. At least one of `modifiedAfter` or `name` should be set to retrieve results. Look at the included RAML definition to learn more about the implemented query parameters.
 
 ### POST /accounts
+
 Inserts new Account to Salesforce
 
 ### GET /accounts/{id}
+
 Retrieves an Account based on the given Salesforce native identifier.
 
 ### PUT /accounts/{id}
+
 Updates an Account with the data in the HTTP request. All fields are overwritten.
 
 ### DELETE /accounts/{id}
-Deletes specific Account based on the given Salesforce native identifier.
 
+Deletes specific Account based on the given Salesforce native identifier.
 
 Look at the included self-descriptive RAML definition and the corresponding flows to learn more about the flows.
 
-# Considerations <a name="considerations"/>
+# Considerations
 
-To make this template run, there are certain preconditions that must be considered. All of them deal with the preparations, that must be made for the template to run smoothly.
-**Failing to do so could lead to unexpected behavior of the template.**
+<!-- Default Considerations (start) -->
 
-## Salesforce Considerations <a name="salesforceconsiderations"/>
+<!-- Default Considerations (end) -->
 
-There may be a few things that you need to know regarding Salesforce, in order for this template to work.
+<!-- Considerations (start) -->
 
-In order to have this template working as expected, you should be aware of your own Salesforce field configuration.
+To make this template run, there are certain preconditions that must be considered. All of them deal with the preparations in both source and destination systems, that must be made for the template to run smoothly. Failing to do so can lead to unexpected behavior of the template.
 
-### FAQ
+## Salesforce Considerations
 
- - Where can I check that the field configuration for my Salesforce instance is the right one?
+Here's what you need to know about Salesforce to get this template to work:
 
-    [Salesforce: Checking Field Accessibility for a Particular Field][1]
+- Where can I check that the field configuration for my Salesforce instance is the right one? See: [Salesforce: Checking Field Accessibility for a Particular Field](https://help.salesforce.com/HTViewHelpDoc?id=checking_field_accessibility_for_a_particular_field.htm&language=en_US "Salesforce: Checking Field Accessibility for a Particular Field").
+- How can I modify the Field Access Settings? See: [Salesforce: Modifying Field Access Settings](https://help.salesforce.com/HTViewHelpDoc?id=modifying_field_access_settings.htm&language=en_US "Salesforce: Modifying Field Access Settings").
 
-- Can I modify the Field Access Settings? How?
+### As a Data Source
 
-    [Salesforce: Modifying Field Access Settings][2]
-
-
-[1]: https://help.salesforce.com/HTViewHelpDoc?id=checking_field_accessibility_for_a_particular_field.htm&language=en_US
-[2]: https://help.salesforce.com/HTViewHelpDoc?id=modifying_field_access_settings.htm&language=en_US
-
-If the user configured in the template for the source system does not have at least *read only* permissions for the fields that are fetched, then a *InvalidFieldFault* API fault will show up.
+If the user who configured the template for the source system does not have at least _read only_ permissions for the fields that are fetched, then an _InvalidFieldFault_ API fault displays.
 
 ```
-java.lang.RuntimeException: [InvalidFieldFault [ApiQueryFault [ApiFault  exceptionCode='INVALID_FIELD'
-exceptionMessage='
-Account.Phone, Account.Rating, Account.RecordTypeId, Account.ShippingCity
+java.lang.RuntimeException: [InvalidFieldFault [ApiQueryFault 
+[ApiFault  exceptionCode='INVALID_FIELD'
+exceptionMessage='Account.Phone, Account.Rating, Account.RecordTypeId, 
+Account.ShippingCity
 ^
 ERROR at Row:1:Column:486
-No such column 'RecordTypeId' on entity 'Account'. If you are attempting to use a custom field, be sure to append the '__c' after the custom field name. Please reference your WSDL or the describe call for the appropriate names.'
+No such column 'RecordTypeId' on entity 'Account'. If you are attempting 
+to use a custom field, be sure to append the '__c' after the custom field 
+name. Reference your WSDL or the describe call for the appropriate names.'
 ]
 row='1'
 column='486'
@@ -88,87 +101,127 @@ column='486'
 ]
 ```
 
+# Run it!
 
+Simple steps to get this template running.
 
-# Run it! <a name="runit"/>
-Simple steps to get API Led Connectivity System API for Salesforce running.
+See below.
 
+## Running On Premises
 
-## Running on premise <a name="runonopremise"/>
 In this section we detail the way you should run your template on your computer.
 
+<!-- Running on premise (end) -->
 
-### Where to Download Mule Studio and Mule ESB
-First thing to know if you are a newcomer to Mule is where to get the tools.
+### Where to Download Anypoint Studio and the Mule Runtime
 
-+ You can download Mule Studio from this [Location](http://www.mulesoft.com/platform/mule-studio)
-+ You can download Mule ESB from this [Location](http://www.mulesoft.com/platform/soa/mule-esb-open-source-esb)
+If you are new to Mule, download this software:
 
+- [Download Anypoint Studio](https://www.mulesoft.com/platform/studio)
+- [Download Mule runtime](https://www.mulesoft.com/lp/dl/mule-esb-enterprise)
 
-### Importing a template into Studio
-Mule Studio offers several ways to import a project into the workspace, for instance:
+**Note:** Anypoint Studio requires JDK 8.
 
-+ Anypoint Studio generated Deployable Archive (.jar)
-+ Anypoint Studio Project from External Location
+<!-- Where to download (end) -->
 
-You can find a detailed description on how to do so in this [Documentation Page](http://www.mulesoft.org/documentation/display/current/Importing+and+Exporting+in+Studio).
+### Importing a Template into Studio
 
+In Studio, click the Exchange X icon in the upper left of the taskbar, log in with your Anypoint Platform credentials, search for the template, and click Open.
 
-### Running on Studio <a name="runonstudio"/>
-Once you have imported you template into Anypoint Studio you need to follow these steps to run it:
+<!-- Importing into Studio (end) -->
 
-+ Locate the properties file `mule.dev.properties`, in src/main/resources
-+ Complete all the properties required as per the examples in the section [Properties to be configured](#propertiestobeconfigured)
-+ Once that is done, right click on you template project folder
-+ Hover you mouse over `"Run as"`
-+ Click on  `"Mule Application"`
+### Running on Studio
 
+After you import your template into Anypoint Studio, follow these steps to run it:
 
-### Running on Mule ESB stand alone <a name="runonmuleesbstandalone"/>
-Complete all properties in one of the property files, for example in [mule.prod.properties](../master/src/main/resources/mule.prod.properties) and run your app with the corresponding environment variable to use it. To follow the example, this will be `mule.env=prod`.
+- Locate the properties file `mule.dev.properties`, in src/main/resources.
+- Complete all the properties required as per the examples in the "Properties to Configure" section.
+- Right click the template project folder.
+- Hover your mouse over `Run as`.
+- Click `Mule Application (configure)`.
+- Inside the dialog, select Environment and set the variable `mule.env` to the value `dev`.
+- Click `Run`.
 
+<!-- Running on Studio (end) -->
 
-## Running on CloudHub <a name="runoncloudhub"/>
-While [creating your application on CloudHub](http://www.mulesoft.org/documentation/display/current/Hello+World+on+CloudHub) (Or you can do it later as a next step), you need to go to Deployment > Advanced to set all environment variables detailed in **Properties to be configured** as well as the **mule.env**.
+### Running on Mule Standalone
 
+Complete all properties in one of the property files, for example in mule.prod.properties and run your app with the corresponding environment variable to use it. To follow the example, use `mule.env=prod`.
 
-### Deploying your template on CloudHub <a name="deployingyouranypointtemplateoncloudhub"/>
-Mule Studio provides you with really easy way to deploy your Template directly to CloudHub, for the specific steps to do so please check this [link](http://www.mulesoft.org/documentation/display/current/Deploying+Mule+Applications#DeployingMuleApplications-DeploytoCloudHub)
+## Running on CloudHub
 
+When creating your application in CloudHub, go to Runtime Manager > Manage Application > Properties to set the environment variables listed in "Properties to Configure" as well as the mule.env value.
 
-## Properties to be configured (With examples) <a name="propertiestobeconfigured"/>
-In order to use this Mule template you need to configure properties (Credentials, configurations, etc.) either in properties file or in CloudHub as Environment Variables. Detail list with examples:
+## Deploying a Template in CloudHub
 
-### Application configuration
+In Studio, right click your project name in Package Explorer and select Anypoint Platform > Deploy on CloudHub.
+
+<!-- Deploying on Cloudhub (end) -->
+
+## Properties to Configure
+
+To use this template, configure properties such as credentials, configurations, etc. in the properties file or in CloudHub from Runtime Manager > Manage Application > Properties. The sections that follow list example values.
+
+### Application Configuration
+
+<!-- Application Configuration (start) -->
+
 **Common Configuration**
 
-+ http.port `9090`
+- http.port `9090`
 
 **Salesforce Connector Configuration**
 
-+ sfdc.username `user@company.com`
-+ sfdc.password `secret`
-+ sfdc.securityToken `h0fcC2Y7dnuH7ELk9BhoW0xu`
+- sfdc.username `user@company.com`
+- sfdc.password `secret`
+- sfdc.securityToken `h0fcC2Y7dnuH7ELk9BhoW0xu`
 
 **API Configuration**
 
-+ api.domain `your-sfdc-api.cloudhub.io`
-+ api.basePath `/api`
+- api.domain `your-sfdc-api.cloudhub.io`
+- api.basePath `/api`
 
+# Customize It!
 
-# Customize It!<a name="customizeit"/>
-This brief guide intends to give a high level idea of how this template is built and how you can change it according to your needs.
-As mule applications are based on XML files, this page will be organized by describing all the XML that conform the template.
-Of course more files will be found such as Test Classes and [Mule Application Files](http://www.mulesoft.org/documentation/display/current/Application+Format), but to keep it simple we will focus on the XMLs.
+This brief guide provides a high level idea of how this template is built and how you can change it for your needs. As Mule applications are based on XML files, this page ise organized by describing what conforms to the template. More files can be found such as test classes and Mule application files, but to keep it simple we focus on this XML file:
 
-Here is a list of the main XML files you'll find in this application:
+- system-api.xml
 
-* [system-api.xml](#systemapisfdc)
+<!-- Customize it (end) -->
 
-## system-api.xml<a name="systemapisfdc"/>
+## system-api.xml
 
-A functional aspect of this template implemented in this XML is to create or update objects in the destination system for a represented use case. You can customize and extend the logic of this template in this XML to more specifically meet your needs.
+The functional aspect of this template implemented in this XML file creates or updates objects in the destination system for a given use case. You can customize and extend the logic of this template in this XML to more specifically meet your needs.
 
-Configuration for Connectors and [Properties Place Holders](http://www.mulesoft.org/documentation/display/current/Configuring+Properties) are also set in this file. **Even though you can change the configuration here, all parameters that can be modified here are in properties file, and this is the recommended place to do it so.** Of course if you want to do core changes to the logic you will probably need to modify this file.
+Configuration for connectors and properties place holders are also set in this file. Even though you can change the configuration here, all parameters that can be modified here are in properties file, which is the recommended place to do it. If you want to do core changes to the logic, modify this file.
 
-In the visual editor they can be found on the *Global Element* tab.
+In the Studio visual editor, the values in this file can be found on the _Global Element_ tab.
+
+<!-- Default Config XML (start) -->
+
+<!-- Config XML (start) -->
+
+<!-- Config XML (end) -->
+
+<!-- Default Business Logic XML (start) -->
+
+<!-- Business Logic XML (start) -->
+
+<!-- Business Logic XML (end) -->
+
+<!-- Default Endpoints XML (start) -->
+
+<!-- Endpoints XML (start) -->
+
+<!-- Endpoints XML (end) -->
+
+<!-- Default Error Handling XML (start) -->
+
+<!-- Error Handling XML (start) -->
+
+<!-- Error Handling XML (end) -->
+
+<!-- Extras (start) -->
+
+<!-- Extras (end) -->
+
