@@ -11,10 +11,10 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
     <munit:config name="test-suite.xml" />
-    <configuration-properties doc:name="Configuration properties" doc:id="4d1cfd27-37cf-4e7e-b110-8f153d066ea4"
-        file="mule.test.properties" />
-    <configuration-properties doc:name="Configuration properties" doc:id="3ada2881-d4b2-4e61-af85-f0d435105cb1"
-        file="common.properties" />
+    
+    <configuration-properties doc:name="Configuration properties" doc:id="4d1cfd27-37cf-4e7e-b110-8f153d066ea4" file="mule.test.properties" />
+    <configuration-properties doc:name="Configuration properties" doc:id="3ada2881-d4b2-4e61-af85-f0d435105cb1" file="common.properties" />
+        
     <http:request-config name="HTTP_Request_Configuration" doc:name="HTTP Request configuration" doc:id="fc3d03c8-d892-46b5-9785-9a513c2a9ed3"
         basePath="${api.basePath}">
         <http:request-connection host="${api.domain}" port="${http.port}" />
@@ -27,22 +27,37 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 		<munit:behavior >
 			<munit-tools:spy doc:name="Spy" doc:id="d6ceec3f-3d94-4453-9a8c-4beb2ba5ae16" processor=".*:.*" >
 				<munit-tools:with-attributes >
-					<munit-tools:with-attribute attributeName="doc:name" whereValue="Build whereClause  for sfdc query" />
+					<munit-tools:with-attribute attributeName="doc:name" whereValue="Build whereClause for sfdc query" />
 				</munit-tools:with-attributes>
 				<munit-tools:after-call >
-					<munit-tools:assert-that doc:name="Assert 'Build whereClause for dsql query'" doc:id="ce8f9cd8-7cd1-4590-b453-15956cc2256b" expression="#[vars.whereClause]" is="#[MunitTools::equalTo(&quot;AND Name LIKE '%Test%' AND LastModifiedDate &lt; 2018-06-01T00:00:00Z AND LastModifiedDate &gt; 2017-01-01T00:00:00Z ORDER BY Name ASC LIMIT 5 OFFSET 0&quot;)]" />
+					<munit-tools:assert-that doc:name="Assert 'Build whereClause for dsql query'" doc:id="ce8f9cd8-7cd1-4590-b453-15956cc2256b" expression="#[vars.whereClause]" is="#[MunitTools::equalTo(&quot;AND Name = '&quot; ++ attributes.queryParams.name ++ &quot;' AND LastModifiedDate &lt; &quot;++ attributes.queryParams.modifiedBefore ++&quot; AND LastModifiedDate &gt; &quot; ++ attributes.queryParams.modifiedAfter ++&quot; ORDER BY Name ASC LIMIT &quot; ++ attributes.queryParams.maxResults ++ &quot; OFFSET &quot; ++ attributes.queryParams.offset)]" />
 				</munit-tools:after-call>
 			</munit-tools:spy>
 		</munit:behavior>
 		<munit:execution >
+			<flow-ref doc:name="insertAccountToSfdc" doc:id="14016968-6bfb-4a0a-aab9-321be0f5c3f0" name="insertAccountToSfdc"/>
+			<ee:transform doc:name="Set request params" doc:id="654b583f-7aff-4341-995e-4b6aaf8474e9" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="modifiedBefore" ><![CDATA[%dw 2.0
+output text/plain
+---
+(now() as DateTime) >> |+00:00|]]></ee:set-variable>
+                    <ee:set-variable variableName="modifiedAfter" ><![CDATA[%dw 2.0
+output text/plain
+---
+((now() - |PT5M|) as DateTime) >> |+00:00|]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
 			<http:request method="GET" doc:name="HTTP GET Request" doc:id="b4dbefde-132d-4790-8795-eb880fe2e5b6" config-ref="HTTP_Request_Configuration" path="/accounts" >
-				<http:query-params ><![CDATA[#[output applicaton/java
+				<http:query-params ><![CDATA[#[output application/java
 ---
 {
-	"name" : "Test",
-	"match" : "like",
-	"modifiedAfter" : "2017-01-01T00:00:00.000Z",
-	"modifiedBefore" : "2018-06-01T00:00:00.000Z",
+	"name" : "test-template-apiled-system-account-sfdc",
+	"match" : "equals",
+	"modifiedAfter" : vars.modifiedAfter,
+	"modifiedBefore" : vars.modifiedBefore,
 	"maxResults" : "5",
 	"offset" : "0",
 	"orderBy" : "name",
@@ -59,8 +74,9 @@ output application/java
 payload]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
-			<munit-tools:assert-that doc:name="Assert that number of records is correct" doc:id="4d0db29b-c13c-47bf-a562-dae6a71e3be0" expression="#[sizeOf(payload)]" is='#[MunitTools::equalTo(5)]' message="Number of records is incorrect!"/>
+			<munit-tools:assert-that doc:name="Assert that number of records is correct" doc:id="4d0db29b-c13c-47bf-a562-dae6a71e3be0" expression="#[sizeOf(payload)]" is='#[MunitTools::equalTo(1)]' message="Number of records is incorrect!"/>
 			<munit-tools:assert-that doc:name="Assert that http.status eq 200" doc:id="1449487c-a810-4919-a567-a09780f6414c" expression="#[attributes.statusCode]" is="#[MunitTools::equalTo(200)]" message="The HTTP Status code is not correct!" />
+			<flow-ref doc:name="deleteAccountFromSfdc" doc:id="fbee7d96-6749-483c-aec7-7a57369e534e" name="deleteAccountFromSfdc"/>
 		</munit:validation>
 	</munit:test>
 	<munit:test name="test-suite-get:accounts_id:system-api-sfdc-Test" description="MUnit Test" doc:id="451a13d7-0763-47d0-aec6-53aa02748e58">
