@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" 
+xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+    <sub-flow name="getAccountsSubFlow" doc:id="0f391308-8c44-4534-aa90-eeae0e1fbed7">
+        <ee:transform doc:name="Build whereClause for sfdc query" doc:id="9ddecf77-a641-4355-8674-ae7ecd2ef5c8">
+            <ee:message>
+            </ee:message>
+            <ee:variables>
+                <ee:set-variable variableName="whereClause"><![CDATA[%dw 2.0
+import global::Commons
+output application/java
+var fields = {     
+    "name"             : "Name",
+    "lastmodifieddate" : "LastModifiedDate"
+}
+type sqldate = String { format: "YYYY-MM-dd HH:mm:ss" }
+---
+using (params = attributes.queryParams)
+{
+    // filtering
+    (name:            (if (params.match == "like") 'AND Name LIKE \'%' ++ Commons::escapeSQL(params.name) ++ '%\'' else 'AND Name = \'' ++ Commons::escapeSQL(params.name) ++ '\'')) if params.name != null,
+    (modifiedBefore:  'AND LastModifiedDate < ' ++ (((params.modifiedBefore as DateTime)  >> |+00:00|))) if params.modifiedBefore != null,
+    (modifiedAfter:   'AND LastModifiedDate > ' ++ (((params.modifiedAfter as DateTime)  >> |+00:00|))) if params.modifiedAfter != null,
+
+    // ordering
+    (orderBy:         'ORDER BY ' ++ fields[(lower(params.orderBy))] ++ (if (params.order != null and params.order == "desc") ' DESC' else " ASC"  )) if params.'orderBy' != null,
+    
+    // pagination
+    (limit:           'LIMIT ' ++ params.maxResults ++ ' OFFSET ' ++ (if (params.offset != null and params.offset >= 0) params.offset else 0)) if params.maxResults != null
+    
+}
+pluck $
+joinBy ' '
+]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <salesforce:query config-ref="Salesforce_Sfdc_config" doc:name="Query Accounts" doc:id="86b68d9f-ba05-46fb-a6fd-bd696db960e2">
+            <salesforce:salesforce-query>#[&quot;SELECT Id, Name, BillingStreet,
+                BillingCity, BillingPostalCode, BillingState,
+                BillingCountry,
+                ShippingStreet, ShippingCity,
+                ShippingPostalCode, ShippingState,
+                ShippingCountry, AccountNumber,
+                LastModifiedDate, LastModifiedById
+                FROM Account WHERE Id != null &quot;++ vars.whereClause]</salesforce:salesforce-query>
+        </salesforce:query>
+        <ee:transform doc:name="Salesforce Account to sAPI Account" doc:id="1fc1ad4c-1769-4379-8fb7-01b5bf4d6a32">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map {
+    id                  : $.Id,
+    nativeId            : $.NativeId,
+    name                : $.Name,
+    email               : $.Email,
+    phone               : $.Phone,
+    billingAddress: {
+        street          : $.BillingStreet,
+        city            : $.BillingCity,
+        state           : $.BillingState,
+        postalCode      : $.BillingPostalCode,
+        country         : $.BillingCountry
+    },
+    shippingAddress: {
+        street          : $.ShippingStreet,
+        city            : $.ShippingCity,
+        state           : $.ShippingState,
+        postalCode      : $.ShippingPostalCode,
+        country         : $.ShippingCountry
+    },  
+    lastModifiedDate    : $.LastModifiedDate,
+    LastModifiedById    : $.LastModifiedById
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </sub-flow>
+    <sub-flow name="getAccountByIdSubFlow" doc:id="bde2e7e3-0cd2-4b95-a95a-de0648f846ca">
+        <salesforce:query-single config-ref="Salesforce_Sfdc_config" doc:name="Query Account" doc:id="4d1129ab-42a5-4aeb-a138-7b68f020e58a">
+            <salesforce:salesforce-query>SELECT Id, Name, BillingStreet,
+                BillingCity, BillingPostalCode, BillingState, BillingCountry,
+                ShippingStreet, ShippingCity,
+                ShippingPostalCode, ShippingState,
+                ShippingCountry, AccountNumber, LastModifiedDate,
+                LastModifiedById
+                FROM Account WHERE Id = ':Id'
+            </salesforce:salesforce-query>
+            <salesforce:parameters><![CDATA[#[output applicaton/java
+---
+{
+    "Id" : attributes.uriParams.id
+}]]]></salesforce:parameters>
+        </salesforce:query-single>
+        <choice doc:name="Does the Account exist?" doc:id="ce548946-0f60-4585-a61f-c760bd9b2e7c">
+            <when expression="#[payload.Id != null]">
+                <ee:transform doc:name="Salesforce Account to sAPI Account" doc:id="2bf9d89a-bfb4-48d7-a9f3-ae1248d29912">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    id                  : payload.Id,
+    nativeId            : payload.Id,
+    name                : payload.Name,
+    billingAddress: {
+        street          : payload.BillingStreet,
+        city            : payload.BillingCity,
+        state           : payload.BillingState,
+        postalCode      : payload.BillingPostalCode,
+        country         : payload.BillingCountry
+    },
+    shippingAddress: {
+        street          : payload.ShippingStreet,
+        city            : payload.ShippingCity,
+        state           : payload.ShippingState,
+        postalCode      : payload.ShippingPostalCode,
+        country         : payload.ShippingCountry
+    },
+    lastModifiedDate    : payload.LastModifiedDate
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </when>
+            <otherwise>
+                <set-variable variableName="httpStatus" value="404" doc:name="Set http status" doc:id="b3e236c0-f0dd-45fb-9caa-6fdb5d1bd670" />
+                <set-payload value='{ "message": "Resource not found" }' doc:name="Account not found" doc:id="195d7f1c-5b7f-47b9-b91f-6bcb44ed0b29" mimeType="application/json" />
+            </otherwise>
+        </choice>
+    </sub-flow>
+    <sub-flow name="postAccountSubFlow" doc:id="47e36565-594d-4170-8e10-a894bb394521">
+        <ee:transform doc:name="Map input to sfdc Account" doc:id="0088eaf4-8b34-4e5f-b15c-b24aa9d5730c">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+    Name               : payload.name,
+    BillingStreet      : payload.billingAddress.street,
+    BillingCity        : payload.billingAddress.city,
+    BillingState       : payload.billingAddress.state,
+    BillingPostalCode  : payload.billingAddress.postalCode,
+    BillingCountry     : payload.billingAddress.country,
+    ShippingStreet     : payload.shippingAddress.street,
+    ShippingCity       : payload.shippingAddress.city,
+    ShippingState      : payload.shippingAddress.state,
+    ShippingPostalCode : payload.shippingAddress.postalCode,
+    ShippingCountry    : payload.shippingAddress.country,
+    Phone              : payload.phone
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <salesforce:create-single config-ref="Salesforce_Sfdc_config" type="Account" doc:name="Create Account" doc:id="e3056ff0-7d0f-40a3-9977-4c0b5c2e3d04" />
+        <choice doc:name="Successful?" doc:id="32ad4fc4-b17f-4f9b-9d25-c07268640814">
+            <when expression="#[payload.success == true]">
+                <salesforce:query-single config-ref="Salesforce_Sfdc_config" doc:name="Query Account" doc:id="4a62ccbc-6d34-461c-b493-f03f5c90e1fe">
+                    <salesforce:salesforce-query>SELECT Name, Id FROM Account WHERE Id=
+                        ':Id'
+                    </salesforce:salesforce-query>
+                    <salesforce:parameters><![CDATA[#[output applicaton/java
+---
+{
+    "Id" : payload.id
+}]]]></salesforce:parameters>
+                </salesforce:query-single>
+                <set-variable variableName="outboundHeaders" value="#[{ 'Location':'http://${api.domain}:${http.port}${api.basePath}/accounts/' ++ payload.Id }]"
+                    doc:name="Set Location header" doc:id="66812ed3-0f3f-40ab-8867-60607aa20bfa" />
+                <ee:transform doc:name="Build Response" doc:id="591c6b22-9c94-4373-9ef0-11da54234f7d">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    id: payload.Id,
+    name: payload.Name
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </when>
+            <otherwise>
+                <set-variable variableName="httpStatus" value="400" doc:name="Bad Request" doc:id="bae3b76e-9395-4199-a1ae-70cfb0332348" />
+                <set-payload value='{ "message": "Failed to create new Account" }' doc:name="Failed to create account" doc:id="f36ca6bc-efe3-4536-8a8f-98933241e67d"
+                    mimeType="application/json" />
+            </otherwise>
+        </choice>
+    </sub-flow>
+    <sub-flow name="putAccountSubFlow" doc:id="3f6186f4-7a3b-40d6-91f9-ad1a942c7c8a">
+        <set-variable variableName="input" value="#[payload]" doc:name="Set Input var" doc:id="d11280e3-8422-489c-9edf-65c96c8eb783" mimeType="application/json" />
+        <salesforce:query-single config-ref="Salesforce_Sfdc_config" doc:name="Query Account" doc:id="c70b8ef7-ce9e-4f6f-8511-cf73d9334329">
+            <salesforce:salesforce-query>SELECT Id FROM Account WHERE Id = ':Id'
+            </salesforce:salesforce-query>
+            <salesforce:parameters><![CDATA[#[output applicaton/java
+---
+{
+    "Id" : attributes.uriParams.id
+}]]]></salesforce:parameters>
+        </salesforce:query-single>
+        <choice doc:name="Does Account exist?" doc:id="e151b988-c9ae-418a-8e20-9367a4beaa69">
+            <when expression="#[payload.Id != null]">
+                <ee:transform doc:name="sAPI Account to Salesforce Account" doc:id="721276fa-934d-40ad-a76e-aa5cadd0a350">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+    Id                : payload.Id,
+    Name              : vars["input"].name,
+    BillingStreet     : vars["input"].billingAddress.street,
+    BillingCity       : vars["input"].billingAddress.city,
+    BillingState      : vars["input"].billingAddress.state,
+    BillingPostalCode : vars["input"].billingAddress.postalCode,
+    BillingCountry    : vars["input"].billingAddress.country,
+    ShippingStreet    : vars["input"].shippingAddress.street,
+    ShippingCity      : vars["input"].shippingAddress.city,
+    ShippingState     : vars["input"].shippingAddress.state,
+    ShippingPostalCode: vars["input"].shippingAddress.postalCode,
+    ShippingCountry   : vars["input"].shippingAddress.country,
+    Phone             : vars["input"].phone
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+                <salesforce:update-single config-ref="Salesforce_Sfdc_config" type="Account" doc:name="Update Account" doc:id="fc8c2e82-c987-4b72-8dfd-8f1914e85994" />
+                <choice doc:name="Has the Account been updated?" doc:id="1a53130a-6422-4553-ab80-58b1394a25bd">
+                    <when expression="#[payload.success == true]">
+                        <logger level="INFO" doc:name="Updated successfully" doc:id="bc183d79-3b88-4819-a56a-b785151c0a5c" />
+                        <set-payload value='{ "status": "OK" }' doc:name="Build response" doc:id="6dc5bd8f-e042-45cd-ad19-888cbd1c5b2c" mimeType="application/json" />
+                    </when>
+                    <otherwise>
+                        <set-variable variableName="httpStatus" value="500" doc:name="Server error" doc:id="08c06dbc-1092-44ee-80b9-20ac9580ca0c" />
+                        <set-payload value='{ "message": "Delete account request failed!" }' doc:name="Server error response" doc:id="8c48b8a7-a805-4b35-9cfc-867641033335"
+                            mimeType="application/json" />
+                    </otherwise>
+                </choice>
+            </when>
+            <otherwise>
+                <set-variable variableName="httpStatus" value="404" doc:name="Set http status" doc:id="ecff2c91-600c-480b-a071-a58b53af4863" />
+                <set-payload value='{ "message": "Resource not found" }' doc:name="Account not found" doc:id="fbbd6d3c-2bc6-4b44-b901-f580b1ac14a7" mimeType="application/json" />
+            </otherwise>
+        </choice>
+    </sub-flow>
+    <sub-flow name="deleteAccountSubFlow" doc:id="57db6594-68b5-4890-b6f0-1e59263ffccc">
+        <salesforce:query-single config-ref="Salesforce_Sfdc_config" doc:name="Query Account" doc:id="c706f441-6a0d-4d11-a77e-8f862526b09f">
+            <salesforce:salesforce-query>SELECT Id, Name, BillingStreet,
+                BillingCity, BillingPostalCode, BillingState, BillingCountry,
+                ShippingStreet, ShippingCity,
+                ShippingPostalCode, ShippingState,
+                ShippingCountry, AccountNumber, LastModifiedDate,
+                LastModifiedById
+                FROM Account WHERE Id = ':Id'
+            </salesforce:salesforce-query>
+            <salesforce:parameters><![CDATA[#[output applicaton/java
+---
+{
+    "Id" : attributes.uriParams.id
+}]]]></salesforce:parameters>
+        </salesforce:query-single>
+        <choice doc:name="Does Account exist?" doc:id="d0a4d6ca-4e2b-46a9-96a7-91d28c9fe7b2">
+            <when expression="#[payload.Id != null]">
+                <ee:transform doc:name="Prepare delete request" doc:id="13c46f66-755b-4c44-9d84-81579a6402f7">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+[payload.Id]]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+                <salesforce:delete config-ref="Salesforce_Sfdc_config" doc:name="Delete" doc:id="238aa9f3-87c3-4a62-af0b-d09277ff426f" />
+                <choice doc:name="Has the Account been deleted?" doc:id="354a2ae3-717d-41de-8856-c3cbb1057793">
+                    <when expression="#[payload[0].success == true]">
+                        <logger level="INFO" doc:name="Deleted successfully" doc:id="904a3140-f14d-409e-a5d5-7e4b3d14dae7" message="Deleted successfully" />
+                        <set-payload value='{ "status": "OK" }' doc:name="Build response" doc:id="b3aaeb6e-485e-4bf0-9f0c-296b68c07510" mimeType="application/json" />
+                    </when>
+                    <otherwise>
+                        <set-variable variableName="httpStatus" value="500" doc:name="Server error" doc:id="2bdab9d2-f493-48db-9294-7dbd75620438" />
+                        <set-payload value='{ "message": "Delete account request failed!" }' doc:name="Server error response" doc:id="85b914c1-c781-4857-aaec-136909f61219"
+                            mimeType="application/json" />
+                    </otherwise>
+                </choice>
+            </when>
+            <otherwise>
+                <set-variable variableName="httpStatus" value="404" doc:name="Set http status" doc:id="32e8b9a9-e0cc-4a4b-9232-4ccd856405fb" />
+                <set-payload value='{ "message": "Resource not found" }' doc:name="Account not found" doc:id="ec03444c-2d2c-4408-94a4-01114a1540f7" mimeType="application/json" />
+            </otherwise>
+        </choice>
+    </sub-flow>
+</mule>
