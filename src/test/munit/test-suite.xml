@@ -13,7 +13,6 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
     <munit:config name="test-suite.xml" />
     
     <configuration-properties doc:name="Configuration properties" doc:id="4d1cfd27-37cf-4e7e-b110-8f153d066ea4" file="mule.test.properties" />
-    <configuration-properties doc:name="Configuration properties" doc:id="3ada2881-d4b2-4e61-af85-f0d435105cb1" file="common.properties" />
         
     <http:request-config name="HTTP_Request_Configuration" doc:name="HTTP Request configuration" doc:id="fc3d03c8-d892-46b5-9785-9a513c2a9ed3"
         basePath="${api.basePath}">
@@ -30,12 +29,12 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 					<munit-tools:with-attribute attributeName="doc:name" whereValue="Build whereClause for sfdc query" />
 				</munit-tools:with-attributes>
 				<munit-tools:after-call >
-					<munit-tools:assert-that doc:name="Assert 'Build whereClause for dsql query'" doc:id="ce8f9cd8-7cd1-4590-b453-15956cc2256b" expression="#[vars.whereClause]" is="#[MunitTools::equalTo(&quot;AND Name = '&quot; ++ attributes.queryParams.name ++ &quot;' AND LastModifiedDate &lt; &quot;++ attributes.queryParams.modifiedBefore ++&quot; AND LastModifiedDate &gt; &quot; ++ attributes.queryParams.modifiedAfter ++&quot; ORDER BY Name ASC LIMIT &quot; ++ attributes.queryParams.maxResults ++ &quot; OFFSET &quot; ++ attributes.queryParams.offset)]" />
+					<munit-tools:assert-that doc:name="Assert 'Build whereClause for dsql query'" doc:id="ce8f9cd8-7cd1-4590-b453-15956cc2256b" expression="#[vars.whereClause]" is="#[MunitTools::equalTo(&quot;AND Name = '&quot; ++ attributes.queryParams.name ++ &quot;' AND LastModifiedDate &lt; &quot;++ attributes.queryParams.modifiedBefore ++&quot; AND LastModifiedDate &gt; &quot; ++ attributes.queryParams.modifiedAfter ++&quot; ORDER BY Name ASC LIMIT &quot; ++ attributes.queryParams.maxResults ++ &quot; OFFSET &quot; ++ attributes.queryParams.offset)]" message="where clause is incorrect"/>
 				</munit-tools:after-call>
 			</munit-tools:spy>
 		</munit:behavior>
 		<munit:execution >
-			<flow-ref doc:name="insertAccountToSfdc" doc:id="14016968-6bfb-4a0a-aab9-321be0f5c3f0" name="insertAccountToSfdc"/>
+			<flow-ref doc:name="Call insertAccountToSfdcSubFlow" doc:id="14016968-6bfb-4a0a-aab9-321be0f5c3f0" name="insertAccountToSfdcSubFlow"/>
 			<ee:transform doc:name="Set request params" doc:id="654b583f-7aff-4341-995e-4b6aaf8474e9" >
 				<ee:message >
 				</ee:message>
@@ -76,7 +75,7 @@ payload]]></ee:set-payload>
 			</ee:transform>
 			<munit-tools:assert-that doc:name="Assert that number of records is correct" doc:id="4d0db29b-c13c-47bf-a562-dae6a71e3be0" expression="#[sizeOf(payload)]" is='#[MunitTools::equalTo(1)]' message="Number of records is incorrect!"/>
 			<munit-tools:assert-that doc:name="Assert that http.status eq 200" doc:id="1449487c-a810-4919-a567-a09780f6414c" expression="#[attributes.statusCode]" is="#[MunitTools::equalTo(200)]" message="The HTTP Status code is not correct!" />
-			<flow-ref doc:name="deleteAccountFromSfdc" doc:id="fbee7d96-6749-483c-aec7-7a57369e534e" name="deleteAccountFromSfdc"/>
+			<flow-ref doc:name="Call deleteAccountFromSfdcSubFlow" doc:id="fbee7d96-6749-483c-aec7-7a57369e534e" name="deleteAccountFromSfdcSubFlow"/>
 		</munit:validation>
 	</munit:test>
 	<munit:test name="test-suite-get:accounts_id:system-api-sfdc-Test" description="MUnit Test" doc:id="451a13d7-0763-47d0-aec6-53aa02748e58">
@@ -85,7 +84,7 @@ payload]]></ee:set-payload>
 			<munit:enable-flow-source value="get:\accounts\(id):system-api-config" />
 		</munit:enable-flow-sources>
 		<munit:execution >
-        <flow-ref doc:name="insertAccountToSfdc" doc:id="f82b2a38-df37-4e4c-81a5-0d63709929a1" name="insertAccountToSfdc" />
+        <flow-ref doc:name="Call insertAccountToSfdcSubFlow" doc:id="f82b2a38-df37-4e4c-81a5-0d63709929a1" name="insertAccountToSfdcSubFlow" />
 			<http:request method="GET" doc:name="HTTP GET Request" doc:id="f05ff0a1-438a-42e4-8f5c-d6f9785e1fdd" config-ref="HTTP_Request_Configuration" path="/accounts/{id}" >
 				<http:uri-params ><![CDATA[#[output applicaton/java
 ---
@@ -96,7 +95,7 @@ payload]]></ee:set-payload>
 		</munit:execution>
 		<munit:validation >
 			<munit-tools:assert-that doc:name="Assert that http.status eq 200" doc:id="1449487c-a810-4919-a567-a09780f6414c" expression="#[attributes.statusCode]" is="#[MunitTools::equalTo(200)]" message="The HTTP Status code is not correct!" />
-			<flow-ref doc:name="deleteAccountFromSfdc" doc:id="dc7d08a0-9e94-4b4a-b0fe-1fb92a054ca1" name="deleteAccountFromSfdc"/>
+			<flow-ref doc:name="Call deleteAccountFromSfdcSubFlow" doc:id="dc7d08a0-9e94-4b4a-b0fe-1fb92a054ca1" name="deleteAccountFromSfdcSubFlow"/>
 		</munit:validation>
 	</munit:test>
 	<munit:test name="test-suite-get:accounts_id:system-api-sfdc-Test-not-found" description="MUnit Test" doc:id="eff5c796-b0df-47e8-9e51-4833f699ffec" expectedErrorType="HTTP:NOT_FOUND">
@@ -145,7 +144,7 @@ payload]]></ee:set-payload>
 		</munit:execution>
 		<munit:validation >
 			<munit-tools:assert-that doc:name="Assert that http.status eq 201" doc:id="1449487c-a810-4919-a567-a09780f6414c" expression="#[attributes.statusCode]" is="#[MunitTools::equalTo(201)]" message="The HTTP Status code is not correct!" />
-			<flow-ref doc:name="deleteAccountFromSfdc" doc:id="859f677f-e65e-4f84-ac1e-b88244f67f8d" name="deleteAccountFromSfdc"/>
+			<flow-ref doc:name="Call deleteAccountFromSfdcSubFlow" doc:id="859f677f-e65e-4f84-ac1e-b88244f67f8d" name="deleteAccountFromSfdcSubFlow"/>
 		</munit:validation>
 	</munit:test>
 	<munit:test name="test-suite-post:accounts:system-api-sfdc-Test-bad-request" description="MUnit Test" doc:id="0cbdafcf-4a3a-4bea-ae7e-d13ce3d5fec6" expectedErrorType="HTTP:BAD_REQUEST">
@@ -169,7 +168,7 @@ payload]]></ee:set-payload>
 			<munit:enable-flow-source value="delete:\accounts\(id):system-api-config" />
 		</munit:enable-flow-sources>
 		<munit:execution >
-			<flow-ref doc:name="insertAccountToSfdc" doc:id="df844563-a3c5-4dc7-bd43-e61908f6550d" name="insertAccountToSfdc" />
+			<flow-ref doc:name="Call insertAccountToSfdcSubFlow" doc:id="df844563-a3c5-4dc7-bd43-e61908f6550d" name="insertAccountToSfdcSubFlow" />
 			<http:request method="DELETE" doc:name="HTTP DELETE Request" doc:id="401b9d22-cfa2-4f51-801f-4015bb3dd238" config-ref="HTTP_Request_Configuration" path="/accounts/{id}" >
 				<http:uri-params ><![CDATA[#[output applicaton/java
 ---
@@ -210,7 +209,7 @@ payload]]></ee:set-payload>
 			<munit:enable-flow-source value="put:\accounts\(id):application\json:system-api-config" />
 		</munit:enable-flow-sources>
 		<munit:execution >
-			<flow-ref doc:name="insertAccountToSfdc" doc:id="36785156-1c51-49be-bfed-b88f3c156bcc" name="insertAccountToSfdc"/>
+			<flow-ref doc:name="Call insertAccountToSfdcSubFlow" doc:id="36785156-1c51-49be-bfed-b88f3c156bcc" name="insertAccountToSfdcSubFlow"/>
 			<set-variable value="#[payload.Id]" doc:name="Set accountId" doc:id="db6db184-912d-4e8e-98b0-e5e8efc6b599" variableName="accountId"/>
 			<set-payload value='{
 	"name"           		: "test-template-apiled-system-account-sfdc",
@@ -285,7 +284,7 @@ payload]]></ee:set-payload>
 			<munit-tools:assert-that doc:name="Assert that http.status eq 404" doc:id="1449487c-a810-4919-a567-a09780f6414c" expression="#[attributes.statusCode]" is="#[MunitTools::equalTo(404)]" message="The HTTP Status code is not correct!" />
 		</munit:validation>
 	</munit:test>
-	<sub-flow name="insertAccountToSfdc" doc:id="4fe8c244-80e1-477e-b376-cfcd3c1b78c9" >
+	<sub-flow name="insertAccountToSfdcSubFlow" doc:id="4fe8c244-80e1-477e-b376-cfcd3c1b78c9" >
 		<ee:transform doc:name="Set test account data" doc:id="70c53a9f-f79a-416f-9e8c-6e1a4172c4e4" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
@@ -299,7 +298,7 @@ output application/java
 		</ee:transform>
 		<salesforce:create-single doc:id="3329102d-638d-49a2-8d3c-54258578fcfd" doc:name="Create test account" config-ref="Salesforce_Sfdc_config" type="Account"/>
 	</sub-flow>
-	<sub-flow name="deleteAccountFromSfdc" doc:id="0485a831-a817-43ef-bb9a-5afcf21c876b" >
+	<sub-flow name="deleteAccountFromSfdcSubFlow" doc:id="0485a831-a817-43ef-bb9a-5afcf21c876b" >
 		<salesforce:query doc:id="e5bd9d97-da65-45fe-a3c2-ccebc4d31862" doc:name="Select test account" config-ref="Salesforce_Sfdc_config">
 			<salesforce:salesforce-query >SELECT Id FROM Account WHERE Name = 'test-template-apiled-system-account-sfdc'</salesforce:salesforce-query>
 		</salesforce:query>
