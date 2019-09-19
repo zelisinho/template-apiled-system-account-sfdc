@@ -74,6 +74,11 @@
             <classifier>mule-plugin</classifier>
             <scope>test</scope>
         </dependency>
+    	<dependency>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-scripting-module</artifactId>
+            <classifier>mule-plugin</classifier>
+        </dependency>
     </dependencies>
     <repositories>
         <repository>
